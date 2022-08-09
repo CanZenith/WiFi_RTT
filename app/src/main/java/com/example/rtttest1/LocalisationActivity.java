@@ -128,6 +128,15 @@ public class LocalisationActivity extends AppCompatActivity implements SensorEve
     private final AccessPoint AP7 = new AccessPoint("14:22:3b:2a:86:f5",39.31,5.6);
     private final AccessPoint AP8 = new AccessPoint("14:22:3b:16:5a:bd",50.43,5.6);
 
+/*
+    private final AccessPoint AP1 = new AccessPoint("b0:e4:d5:39:26:89",9.683,19.427);
+    private final AccessPoint AP3 = new AccessPoint("b0:e4:d5:01:26:f5",15.4,16.633);
+    private final AccessPoint AP4 = new AccessPoint("b0:e4:d5:91:ba:5d",15.4,10.707);
+    private final AccessPoint AP5 = new AccessPoint("b0:e4:d5:96:3b:95",12.08,5.6);
+    private final AccessPoint AP7 = new AccessPoint("14:22:3b:2a:86:f5",8.361,10.664);
+
+ */
+
     //flag for leaving the activity
     private Boolean Running = true;
 

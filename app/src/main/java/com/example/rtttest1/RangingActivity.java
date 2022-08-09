@@ -1,7 +1,6 @@
 package com.example.rtttest1;
 
 import static android.os.Environment.getExternalStorageDirectory;
-
 import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -19,7 +18,6 @@ import android.net.wifi.rtt.RangingResult;
 import android.net.wifi.rtt.RangingResultCallback;
 import android.net.wifi.rtt.WifiRttManager;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.SystemClock;
 import android.util.Log;
@@ -29,29 +27,21 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.core.content.FileProvider;
-
 import com.google.android.material.snackbar.Snackbar;
-import com.opencsv.CSVWriter;
-
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.FormBody;
@@ -62,6 +52,9 @@ import okhttp3.Response;
 
 //TODO put common class in service?
 //TODO Try different layout view(linear?)
+//TODO building a RangingRequest by hand
+//TODO RTT between WiFi Aware peers?
+//TODO one-2way RTT
 
 /**
  * Send ranging requests and display distance and RSSI values
@@ -126,13 +119,12 @@ public class RangingActivity extends AppCompatActivity implements SensorEventLis
 
     int Check_Point_Counts = 0;
     Boolean First_measurement = true;
-
-    FileWriter writer;
+    int num = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         dataLines = new ArrayList<>();
-        dataLines.add(new String[]{"RTT_TIMESTAMP", "RTT_RESULT", "IMU_TIMESTAMP", "Accx", "Accy", "Accz",
+        dataLines.add(new String[]{"Number","RTT_TIMESTAMP", "RTT_RESULT", "IMU_TIMESTAMP", "Accx", "Accy", "Accz",
                 "Gyrox", "Gyroy", "Gyroz", "Magx", "Magy", "Magz", "Azimuth", "Pitch", "Roll", "Points", "\n"});
         super.onCreate(savedInstanceState);
         Log.d(TAG, "onCreate() RangingActivity");
@@ -199,16 +191,6 @@ public class RangingActivity extends AppCompatActivity implements SensorEventLis
             //Start
             registerSensors();
             startRangingRequest();
-            //writeCSV();
-
-            /*
-            Log.d(TAG, String.valueOf(this.getExternalFilesDir(null)));
-            try {
-                writer = new FileWriter(new File(this.getExternalFilesDir(null).getAbsolutePath(), "data.csv"));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-             */
             }
         }
 
@@ -281,6 +263,8 @@ public class RangingActivity extends AppCompatActivity implements SensorEventLis
             } else {
                 Snackbar.make(view, "Stop sending data", Snackbar.LENGTH_SHORT).show();
                 logging_button_text.setText("Start logging");
+                Check_Point_Counts = 0;
+                Counts.setText(String.valueOf(Check_Point_Counts));
             }
 
             Log.d(TAG, "logging: " + logging + " activity running: " + activity_running);
@@ -289,7 +273,6 @@ public class RangingActivity extends AppCompatActivity implements SensorEventLis
             Runnable LogRTT_Runnable = new Runnable() {
                 @Override
                 public void run() {
-                    Log.d(TAG, String.valueOf(logging && activity_running));
                     if (logging && activity_running) {
 
                         //rate of RTT packet sending(optimal is 200)
@@ -304,41 +287,45 @@ public class RangingActivity extends AppCompatActivity implements SensorEventLis
                         }
 
                         RequestBody RTT_body = new FormBody.Builder()
+                                .add("Number",String.valueOf(num))
                                 .add("RTT_Timestamp", String.valueOf(RTT_timestamp))
                                 .add("RTT_Result", String.valueOf(RangingInfo))
-                                .add("IMU_Timestamp", String.valueOf(Closest_IMU_timestamp))
-                                .add("Accx", String.valueOf(Synchronised_LastAccReading[0]))
-                                .add("Accy", String.valueOf(Synchronised_LastAccReading[1]))
-                                .add("Accz", String.valueOf(Synchronised_LastAccReading[2]))
-                                .add("Gyrox", String.valueOf(Synchronised_LastGyroReading[0]))
-                                .add("Gyroy", String.valueOf(Synchronised_LastGyroReading[1]))
-                                .add("Gyroz", String.valueOf(Synchronised_LastGyroReading[2]))
-                                .add("Magx", String.valueOf(Synchronised_LastMagReading[0]))
-                                .add("Magy", String.valueOf(Synchronised_LastMagReading[1]))
-                                .add("Magz", String.valueOf(Synchronised_LastMagReading[2]))
-                                .add("Azimuth", String.valueOf(Synchronised_orientationAngles[0]))
-                                .add("Pitch", String.valueOf(Synchronised_orientationAngles[1]))
-                                .add("Roll", String.valueOf(Synchronised_orientationAngles[2]))
+                                .add("IMU_Timestamp", String.valueOf(IMU_timestamp))
+                                .add("Accx", String.valueOf(LastAccReading[0]))
+                                .add("Accy", String.valueOf(LastAccReading[1]))
+                                .add("Accz", String.valueOf(LastAccReading[2]))
+                                .add("Gyrox", String.valueOf(LastGyroReading[0]))
+                                .add("Gyroy", String.valueOf(LastGyroReading[1]))
+                                .add("Gyroz", String.valueOf(LastGyroReading[2]))
+                                .add("Magx", String.valueOf(LastMagReading[0]))
+                                .add("Magy", String.valueOf(LastMagReading[1]))
+                                .add("Magz", String.valueOf(LastMagReading[2]))
+                                .add("Azimuth", String.valueOf(orientationAngles[0]))
+                                .add("Pitch", String.valueOf(orientationAngles[1]))
+                                .add("Roll", String.valueOf(orientationAngles[2]))
                                 .add("Points", String.valueOf(Check_Point_Counts))
                                 .build();
 
-                        String[] data = {String.valueOf(RTT_timestamp),
+                        String[] data = {String.valueOf(num),
+                                String.valueOf(RTT_timestamp),
                                 String.valueOf(RangingInfo),
-                                String.valueOf(Closest_IMU_timestamp),
-                                String.valueOf(Synchronised_LastAccReading[0]),
-                                String.valueOf(Synchronised_LastAccReading[1]),
-                                String.valueOf(Synchronised_LastAccReading[2]),
-                                String.valueOf(Synchronised_LastGyroReading[0]),
-                                String.valueOf(Synchronised_LastGyroReading[1]),
-                                String.valueOf(Synchronised_LastGyroReading[2]),
-                                String.valueOf(Synchronised_LastMagReading[0]),
-                                String.valueOf(Synchronised_LastMagReading[1]),
-                                String.valueOf(Synchronised_LastMagReading[2]),
-                                String.valueOf(Synchronised_orientationAngles[0]),
-                                String.valueOf(Synchronised_orientationAngles[1]),
-                                String.valueOf(Synchronised_orientationAngles[2]),
+                                String.valueOf(IMU_timestamp),
+                                String.valueOf(LastAccReading[0]),
+                                String.valueOf(LastAccReading[1]),
+                                String.valueOf(LastAccReading[2]),
+                                String.valueOf(LastGyroReading[0]),
+                                String.valueOf(LastGyroReading[1]),
+                                String.valueOf(LastGyroReading[2]),
+                                String.valueOf(LastMagReading[0]),
+                                String.valueOf(LastMagReading[1]),
+                                String.valueOf(LastMagReading[2]),
+                                String.valueOf(orientationAngles[0]),
+                                String.valueOf(orientationAngles[1]),
+                                String.valueOf(orientationAngles[2]),
                                 String.valueOf(Check_Point_Counts), "\n"};
                         dataLines.add(data);
+
+                        num ++;
 
                         Request RTT_request = new Request.Builder()
                                 .url(url)
@@ -356,7 +343,7 @@ public class RangingActivity extends AppCompatActivity implements SensorEventLis
                             @Override
                             public void onResponse(@NonNull Call call, @NonNull Response response)
                                     throws IOException {
-                                String result = Objects.requireNonNull(response.body()).string();
+                                //String result = Objects.requireNonNull(response.body()).string();
                                 response.close();
                                 //Log.i("result",result);
                             }
@@ -457,7 +444,7 @@ public class RangingActivity extends AppCompatActivity implements SensorEventLis
 
                 // clear the array for next measurement
                 dataLines = new ArrayList<>();
-                dataLines.add(new String[]{"RTT_TIMESTAMP", "RTT_RESULT", "IMU_TIMESTAMP", "Accx", "Accy", "Accz",
+                dataLines.add(new String[]{"Number","RTT_TIMESTAMP", "RTT_RESULT", "IMU_TIMESTAMP", "Accx", "Accy", "Accz",
                         "Gyrox", "Gyroy", "Gyroz", "Magx", "Magy", "Magz", "Azimuth", "Pitch", "Roll", "Points", "\n"});
             } catch (Exception e) {
                 e.printStackTrace();
@@ -494,13 +481,15 @@ public class RangingActivity extends AppCompatActivity implements SensorEventLis
                     LastAccReading[0] = sensorEvent.values[0];
                     LastAccReading[1] = sensorEvent.values[1];
                     LastAccReading[2] = sensorEvent.values[2];
-
+                    /*
                     String AccX = this.getString(R.string.AccelerometerX, LastAccReading[0]);
                     String AccY = this.getString(R.string.AccelerometerY, LastAccReading[1]);
                     String AccZ = this.getString(R.string.AccelerometerZ, LastAccReading[2]);
                     textAccx.setText(AccX);
                     textAccy.setText(AccY);
                     textAccz.setText(AccZ);
+
+                     */
                     break;
 
                 case Sensor.TYPE_MAGNETIC_FIELD:
@@ -513,25 +502,29 @@ public class RangingActivity extends AppCompatActivity implements SensorEventLis
                     LastMagReading[0] = sensorEvent.values[0];
                     LastMagReading[1] = sensorEvent.values[1];
                     LastMagReading[2] = sensorEvent.values[2];
-
+                    /*
                     String MagX = this.getString(R.string.Magnetic_FieldX, LastMagReading[0]);
                     String MagY = this.getString(R.string.Magnetic_FieldY, LastMagReading[1]);
                     String MagZ = this.getString(R.string.Magnetic_FieldZ, LastMagReading[2]);
                     textMagx.setText(MagX);
                     textMagy.setText(MagY);
                     textMagz.setText(MagZ);
+
+                     */
                     break;
 
                 case Sensor.TYPE_GYROSCOPE:
                     LastGyroReading[0] = sensorEvent.values[0];
                     LastGyroReading[1] = sensorEvent.values[1];
                     LastGyroReading[2] = sensorEvent.values[2];
+                    /*
                     String GyroX = this.getString(R.string.GyroscopeX, LastGyroReading[0]);
                     String GyroY = this.getString(R.string.GyroscopeY, LastGyroReading[1]);
                     String GyroZ = this.getString(R.string.GyroscopeZ, LastGyroReading[2]);
                     textGrox.setText(GyroX);
                     textGroy.setText(GyroY);
                     textGroz.setText(GyroZ);
+                     */
             }
 
             // Rotation matrix based on current readings from accelerometer and magnetometer.
@@ -603,6 +596,7 @@ public class RangingActivity extends AppCompatActivity implements SensorEventLis
             @SuppressLint("WrongConstant")
             @Override
             public void onRangingResults(@NonNull List<RangingResult> list) {
+                Log.d(TAG, String.valueOf(list));
                 List<RangingResult> temp_result = new ArrayList<>();
                 for (RangingResult result : list) {
                     if (result.getStatus() == 0) {
@@ -622,26 +616,6 @@ public class RangingActivity extends AppCompatActivity implements SensorEventLis
                     }
                     queueNextRangingRequest();
                 }
-            }
-        }
-
-        public void WriteCSV () {
-            String csv = (getExternalStorageDirectory().getAbsolutePath() + "/RTTIMU.csv");
-            Log.d(TAG, csv);
-            CSVWriter writer = null;
-            try {
-                writer = new CSVWriter(new FileWriter(csv));
-
-                List<String[]> data = new ArrayList<String[]>();
-                data.add(new String[]{"A", "B"});
-                data.add(new String[]{"C", "D"});
-
-                writer.writeAll(data);
-
-                writer.close();
-                //callRead();
-            } catch (IOException e) {
-                e.printStackTrace();
             }
         }
 
