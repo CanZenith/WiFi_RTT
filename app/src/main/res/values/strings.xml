@@ -46,11 +46,13 @@
     <!-- LocalisationActivity -->
     <string name="ActivityLocalisationLabel">Localisation based on floor plan</string>
     <string name="StartUpdatingLocationButton">Start Updating Location</string>
+    <string name="ChangeVisualisationButton">None</string>
 
     <!-- activity_localization.xml -->
     <string name="FloorPlanContentDescription">Floor plan for localization</string>
     <string name="LocationPinContentDescription">Pin of current location</string>
     <string name="APContentDescription">Pin of active AP</string>
+    <string name="TrilaterationCircle">Circle used to trilateration</string>
     <string name="StartLoggingButtonPressed">Start logging</string>
     <string name="StopLoggingButtonPressed">Stop logging</string>
 

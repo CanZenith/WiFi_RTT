@@ -32,7 +32,6 @@
         android:allowBackup="true"
         android:largeHeap="true"
         android:hardwareAccelerated="false">
-        <!--android:largeHeap="true"-->
 
         <activity
             android:name=".MainActivity"

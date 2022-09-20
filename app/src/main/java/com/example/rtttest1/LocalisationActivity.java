@@ -27,12 +27,17 @@ import android.os.Handler;
 import android.os.SystemClock;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.google.android.material.snackbar.Snackbar;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -72,6 +77,9 @@ public class LocalisationActivity extends AppCompatActivity implements SensorEve
 
     final Handler RangingRequestDelayHandler = new Handler();
 
+    private int buttonState = 0;
+    private Button visualiseButton;
+
     /**
      * For IMU service
      */
@@ -100,9 +108,12 @@ public class LocalisationActivity extends AppCompatActivity implements SensorEve
     private Path path;
     private Bitmap temp_bitmap;
     private Canvas temp_canvas;
+    //private Canvas circle_canvas;
     
     private ImageView floor_plan, location_pin, AP1_ImageView, AP2_ImageView,
-            AP3_ImageView, AP4_ImageView, AP5_ImageView, AP6_ImageView, AP7_ImageView, AP8_ImageView;
+            AP3_ImageView, AP4_ImageView, AP5_ImageView, AP6_ImageView, AP7_ImageView,
+            AP8_ImageView, Circle1_ImageView, Circle2_ImageView, Circle3_ImageView;
+    private ImageView[] Circles = new ImageView[3];
 
     private TextView LocationX, LocationY;
 
@@ -118,6 +129,8 @@ public class LocalisationActivity extends AppCompatActivity implements SensorEve
     int color_blue = Color.parseColor("#0000FF");
     int color_green = Color.parseColor("#00FF00");
     int APList_start, APList_end, DisList_start, DisList_end;
+
+    //int[] r = {200,300,400,500,600,700};
 
     private String Location_from_server;
     private String APList, DisList;
@@ -164,6 +177,7 @@ public class LocalisationActivity extends AppCompatActivity implements SensorEve
             finish();
         } else {
             setContentView(R.layout.activity_localisation);
+            visualiseButton = findViewById(R.id.btnVisualise);
 
             //RTT Initiation
             myWifiRTTManager = (WifiRttManager) getSystemService(Context.WIFI_RTT_RANGING_SERVICE);
@@ -195,6 +209,13 @@ public class LocalisationActivity extends AppCompatActivity implements SensorEve
             AP6_ImageView = findViewById(R.id.imageViewAP6);
             AP7_ImageView = findViewById(R.id.imageViewAP7);
             AP8_ImageView = findViewById(R.id.imageViewAP8);
+            Circle1_ImageView = findViewById(R.id.imageViewCircle1);
+            Circle2_ImageView = findViewById(R.id.imageViewCircle2);
+            Circle3_ImageView = findViewById(R.id.imageViewCircle3);
+
+            Circles[0] = Circle1_ImageView;
+            Circles[1] = Circle2_ImageView;
+            Circles[2] = Circle3_ImageView;
 
             LocationX = findViewById(R.id.textViewLocationX);
             LocationY = findViewById(R.id.textViewLocationY);
@@ -217,7 +238,7 @@ public class LocalisationActivity extends AppCompatActivity implements SensorEve
             paint.setStrokeWidth(10);
             paint.setPathEffect(new DashPathEffect(new float[] {20,10,10,10},1));
 
-            paint_circle.setColor(color_green);
+            paint_circle.setColor(Color.MAGENTA);
             paint_circle.setStyle(Paint.Style.STROKE);
             paint_circle.setStrokeWidth(10);
 
@@ -286,8 +307,8 @@ public class LocalisationActivity extends AppCompatActivity implements SensorEve
     }
 
     private void setup_pin_location(){
-        AP1_ImageView.setX(coordinate_X_to_Pixel(AP1.getY()));
-        AP1_ImageView.setY(coordinate_Y_to_Pixel(AP1.getX()));
+        AP1_ImageView.setX(coordinate_X_to_Pixel(AP1.getY())); //x=662
+        AP1_ImageView.setY(coordinate_Y_to_Pixel(AP1.getX())); //y=1037
         AP2_ImageView.setX(coordinate_X_to_Pixel(AP2.getY()));
         AP2_ImageView.setY(coordinate_Y_to_Pixel(AP2.getX()));
         AP3_ImageView.setX(coordinate_X_to_Pixel(AP3.getY()));
@@ -302,6 +323,10 @@ public class LocalisationActivity extends AppCompatActivity implements SensorEve
         AP7_ImageView.setY(coordinate_Y_to_Pixel(AP7.getX()));
         AP8_ImageView.setX(coordinate_X_to_Pixel(AP8.getY()));
         AP8_ImageView.setY(coordinate_Y_to_Pixel(AP8.getX()));
+
+        Circles[0].setAlpha(0.0f);
+        Circles[1].setAlpha(0.0f);
+        Circles[2].setAlpha(0.0f);
 
         //my desk
         location_pin.setX(coordinate_X_to_Pixel(14.66));
@@ -332,77 +357,15 @@ public class LocalisationActivity extends AppCompatActivity implements SensorEve
                             location_pin.setX(coordinate_X_to_Pixel(Double.parseDouble(Calculated_coordinates[1])));
                             location_pin.setY(coordinate_Y_to_Pixel(Double.parseDouble(Calculated_coordinates[0])));
 
-                            //visualiseTrilateration();
+                            Log.d("Location information","Location X: " + Calculated_coordinates[0]
+                                    + "Location Y: " + Calculated_coordinates[1]);
 
-                            if (APList_end - APList_start > 1) {
-                                //reset all AP image color
-                                AP1_ImageView.setColorFilter(color_blue);
-                                AP2_ImageView.setColorFilter(color_blue);
-                                AP3_ImageView.setColorFilter(color_blue);
-                                AP4_ImageView.setColorFilter(color_blue);
-                                AP5_ImageView.setColorFilter(color_blue);
-                                AP6_ImageView.setColorFilter(color_blue);
-                                AP7_ImageView.setColorFilter(color_blue);
-                                AP8_ImageView.setColorFilter(color_blue);
-
-                                String[] AP_List = APList.split(", ");
-                                String[] Dis_List = DisList.split(", ");
-                                int[] AP_List_int = new int[AP_List.length];
-                                float[] Dis_List_float = new float[Dis_List.length];
-
-                                //Transfer String[] to int[] and float[]
-                                for (int j = 0; j < AP_List.length; j++) {
-                                    AP_List_int[j] = Integer.parseInt(AP_List[j]);
-                                    Dis_List_float[j] = Float.parseFloat(Dis_List[j]);
-                                }
-
-                                //Change AP image color and draw circle
-                                for (int i = 0; i < AP_List.length; i++) {
-                                    switch (AP_List_int[i]) {
-                                        case 1:
-                                            AP1_ImageView.setColorFilter(color_green);
-                                            temp_canvas.drawCircle(coordinate_X_to_Pixel(AP1.getY()),
-                                                    coordinate_Y_to_Pixel(AP1.getX()), Dis_List_float[i], paint_circle);
-                                            break;
-                                        case 2:
-                                            AP2_ImageView.setColorFilter(color_green);
-                                            temp_canvas.drawCircle(coordinate_X_to_Pixel(AP2.getY()),
-                                                    coordinate_Y_to_Pixel(AP2.getX()), Dis_List_float[i], paint_circle);
-                                            break;
-                                        case 3:
-                                            AP3_ImageView.setColorFilter(color_green);
-                                            temp_canvas.drawCircle(coordinate_X_to_Pixel(AP3.getY()),
-                                                    coordinate_Y_to_Pixel(AP3.getX()), Dis_List_float[i], paint_circle);
-                                            break;
-                                        case 4:
-                                            AP4_ImageView.setColorFilter(color_green);
-                                            temp_canvas.drawCircle(coordinate_X_to_Pixel(AP4.getY()),
-                                                    coordinate_Y_to_Pixel(AP4.getX()), Dis_List_float[i], paint_circle);
-                                            break;
-                                        case 5:
-                                            AP5_ImageView.setColorFilter(color_green);
-                                            temp_canvas.drawCircle(coordinate_X_to_Pixel(AP5.getY()),
-                                                    coordinate_Y_to_Pixel(AP5.getX()), Dis_List_float[i], paint_circle);
-                                            break;
-                                        case 6:
-                                            AP6_ImageView.setColorFilter(color_green);
-                                            temp_canvas.drawCircle(coordinate_X_to_Pixel(AP6.getY()),
-                                                    coordinate_Y_to_Pixel(AP6.getX()), Dis_List_float[i], paint_circle);
-                                            break;
-                                        case 7:
-                                            AP7_ImageView.setColorFilter(color_green);
-                                            temp_canvas.drawCircle(coordinate_X_to_Pixel(AP7.getY()),
-                                                    coordinate_Y_to_Pixel(AP7.getX()), Dis_List_float[i], paint_circle);
-                                            break;
-                                        case 8:
-                                            AP8_ImageView.setColorFilter(color_green);
-                                            temp_canvas.drawCircle(coordinate_X_to_Pixel(AP8.getY()),
-                                                    coordinate_Y_to_Pixel(AP8.getX()), Dis_List_float[i], paint_circle);
-                                            break;
-                                    }
-                                }
+                            if (buttonState == 1||buttonState == 2) {
+                                visualiseTrilateration();
                             }
+
                             start_localisation ++;
+
                         } else {
                             LocationX.setText(String.format(Locale.getDefault(),
                                     "%.2f", Double.valueOf(Calculated_coordinates[0])));
@@ -422,75 +385,8 @@ public class LocalisationActivity extends AppCompatActivity implements SensorEve
 
                             Previous_location_for_line_drawing = Calculated_coordinates;
 
-                            //visualiseTrilateration();
-
-                            if (APList_end - APList_start > 1) {
-                                //reset all AP image color
-                                AP1_ImageView.setColorFilter(color_blue);
-                                AP2_ImageView.setColorFilter(color_blue);
-                                AP3_ImageView.setColorFilter(color_blue);
-                                AP4_ImageView.setColorFilter(color_blue);
-                                AP5_ImageView.setColorFilter(color_blue);
-                                AP6_ImageView.setColorFilter(color_blue);
-                                AP7_ImageView.setColorFilter(color_blue);
-                                AP8_ImageView.setColorFilter(color_blue);
-
-                                String[] AP_List = APList.split(", ");
-                                String[] Dis_List = DisList.split(", ");
-                                int[] AP_List_int = new int[AP_List.length];
-                                float[] Dis_List_float = new float[Dis_List.length];
-
-                                //Transfer String[] to int[] and float[]
-                                for (int j = 0; j < AP_List.length; j++) {
-                                    AP_List_int[j] = Integer.parseInt(AP_List[j]);
-                                    Dis_List_float[j] = Float.parseFloat(Dis_List[j]);
-                                }
-
-                                //Change AP image color and draw circle
-                                for (int i = 0; i < AP_List.length; i++) {
-                                    switch (AP_List_int[i]) {
-                                        case 1:
-                                            AP1_ImageView.setColorFilter(color_green);
-                                            temp_canvas.drawCircle(coordinate_X_to_Pixel(AP1.getY()),
-                                                    coordinate_Y_to_Pixel(AP1.getX()), Dis_List_float[i], paint_circle);
-                                            break;
-                                        case 2:
-                                            AP2_ImageView.setColorFilter(color_green);
-                                            temp_canvas.drawCircle(coordinate_X_to_Pixel(AP2.getY()),
-                                                    coordinate_Y_to_Pixel(AP2.getX()), Dis_List_float[i], paint_circle);
-                                            break;
-                                        case 3:
-                                            AP3_ImageView.setColorFilter(color_green);
-                                            temp_canvas.drawCircle(coordinate_X_to_Pixel(AP3.getY()),
-                                                    coordinate_Y_to_Pixel(AP3.getX()), Dis_List_float[i], paint_circle);
-                                            break;
-                                        case 4:
-                                            AP4_ImageView.setColorFilter(color_green);
-                                            temp_canvas.drawCircle(coordinate_X_to_Pixel(AP4.getY()),
-                                                    coordinate_Y_to_Pixel(AP4.getX()), Dis_List_float[i], paint_circle);
-                                            break;
-                                        case 5:
-                                            AP5_ImageView.setColorFilter(color_green);
-                                            temp_canvas.drawCircle(coordinate_X_to_Pixel(AP5.getY()),
-                                                    coordinate_Y_to_Pixel(AP5.getX()), Dis_List_float[i], paint_circle);
-                                            break;
-                                        case 6:
-                                            AP6_ImageView.setColorFilter(color_green);
-                                            temp_canvas.drawCircle(coordinate_X_to_Pixel(AP6.getY()),
-                                                    coordinate_Y_to_Pixel(AP6.getX()), Dis_List_float[i], paint_circle);
-                                            break;
-                                        case 7:
-                                            AP7_ImageView.setColorFilter(color_green);
-                                            temp_canvas.drawCircle(coordinate_X_to_Pixel(AP7.getY()),
-                                                    coordinate_Y_to_Pixel(AP7.getX()), Dis_List_float[i], paint_circle);
-                                            break;
-                                        case 8:
-                                            AP8_ImageView.setColorFilter(color_green);
-                                            temp_canvas.drawCircle(coordinate_X_to_Pixel(AP8.getY()),
-                                                    coordinate_Y_to_Pixel(AP8.getX()), Dis_List_float[i], paint_circle);
-                                            break;
-                                    }
-                                }
+                            if (buttonState == 1||buttonState == 2) {
+                                visualiseTrilateration();
                             }
                         }
                     }
@@ -514,60 +410,118 @@ public class LocalisationActivity extends AppCompatActivity implements SensorEve
             AP7_ImageView.setColorFilter(color_blue);
             AP8_ImageView.setColorFilter(color_blue);
 
+            //reset all circles transparency
+            Circles[0].setAlpha(0.0f);
+            Circles[1].setAlpha(0.0f);
+            Circles[2].setAlpha(0.0f);
+
             String[] AP_List = APList.split(", ");
             String[] Dis_List = DisList.split(", ");
             int[] AP_List_int = new int[AP_List.length];
             float[] Dis_List_float = new float[Dis_List.length];
+            int[] Diameter = new int[Dis_List.length];
 
-            //Transfer String[] to int[] and float[]
+            Log.d("Location information","Location X/Y: "+Calculated_coordinates[0]+ ", "
+                    +Calculated_coordinates[1]+", AP: "+APList+", Distance: "+DisList);
+
+            //Transfer String[] to int[] and float[], convert distance from meter to pixel
             for (int j = 0; j < AP_List.length; j++) {
                 AP_List_int[j] = Integer.parseInt(AP_List[j]);
                 Dis_List_float[j] = Float.parseFloat(Dis_List[j]);
+                Diameter[j] = Math.round(2 * 32.53f * Dis_List_float[j]);
             }
 
-            //Change AP image color and draw circle
-            for (int i = 0; i < AP_List.length; i++) {
-                switch (AP_List_int[i]) {
-                    case 1:
-                        AP1_ImageView.setColorFilter(color_green);
-                        temp_canvas.drawCircle(coordinate_X_to_Pixel(AP1.getY()),
-                                coordinate_Y_to_Pixel(AP1.getX()), Dis_List_float[i], paint_circle);
-                        break;
-                    case 2:
-                        AP2_ImageView.setColorFilter(color_green);
-                        temp_canvas.drawCircle(coordinate_X_to_Pixel(AP2.getY()),
-                                coordinate_Y_to_Pixel(AP2.getX()), Dis_List_float[i], paint_circle);
-                        break;
-                    case 3:
-                        AP3_ImageView.setColorFilter(color_green);
-                        temp_canvas.drawCircle(coordinate_X_to_Pixel(AP3.getY()),
-                                coordinate_Y_to_Pixel(AP3.getX()), Dis_List_float[i], paint_circle);
-                        break;
-                    case 4:
-                        AP4_ImageView.setColorFilter(color_green);
-                        temp_canvas.drawCircle(coordinate_X_to_Pixel(AP4.getY()),
-                                coordinate_Y_to_Pixel(AP4.getX()), Dis_List_float[i], paint_circle);
-                        break;
-                    case 5:
-                        AP5_ImageView.setColorFilter(color_green);
-                        temp_canvas.drawCircle(coordinate_X_to_Pixel(AP5.getY()),
-                                coordinate_Y_to_Pixel(AP5.getX()), Dis_List_float[i], paint_circle);
-                        break;
-                    case 6:
-                        AP6_ImageView.setColorFilter(color_green);
-                        temp_canvas.drawCircle(coordinate_X_to_Pixel(AP6.getY()),
-                                coordinate_Y_to_Pixel(AP6.getX()), Dis_List_float[i], paint_circle);
-                        break;
-                    case 7:
-                        AP7_ImageView.setColorFilter(color_green);
-                        temp_canvas.drawCircle(coordinate_X_to_Pixel(AP7.getY()),
-                                coordinate_Y_to_Pixel(AP7.getX()), Dis_List_float[i], paint_circle);
-                        break;
-                    case 8:
-                        AP8_ImageView.setColorFilter(color_green);
-                        temp_canvas.drawCircle(coordinate_X_to_Pixel(AP8.getY()),
-                                coordinate_Y_to_Pixel(AP8.getX()), Dis_List_float[i], paint_circle);
-                        break;
+            if (buttonState == 1) {
+                //Change AP image color and draw circle
+                for (int i = 0; i < AP_List.length; i++) {
+                    switch (AP_List_int[i]) {
+                        case 1:
+                            AP1_ImageView.setColorFilter(color_green);
+                            break;
+                        case 2:
+                            AP2_ImageView.setColorFilter(color_green);
+                            break;
+                        case 3:
+                            AP3_ImageView.setColorFilter(color_green);
+                            break;
+                        case 4:
+                            AP4_ImageView.setColorFilter(color_green);
+                            break;
+                        case 5:
+                            AP5_ImageView.setColorFilter(color_green);
+                            break;
+                        case 6:
+                            AP6_ImageView.setColorFilter(color_green);
+                            break;
+                        case 7:
+                            AP7_ImageView.setColorFilter(color_green);
+                            break;
+                        case 8:
+                            AP8_ImageView.setColorFilter(color_green);
+                            break;
+                    }
+                }
+            } else if (buttonState == 2) {
+                //Change AP image color and draw circle
+                for (int i = 0; i < AP_List.length; i++) {
+                    switch (AP_List_int[i]) {
+                        case 1:
+                            AP1_ImageView.setColorFilter(color_green);
+                            Circles[i].setLayoutParams(new FrameLayout.LayoutParams(Diameter[i], Diameter[i]));
+                            Circles[i].setAlpha(0.2f);
+                            Circles[i].setX(coordinate_X_to_Pixel(AP1.getY()) - 1f * Diameter[i] / 2 + 24);
+                            Circles[i].setY(coordinate_Y_to_Pixel(AP1.getX()) - 1f * Diameter[i] / 2 + 24);
+                            break;
+                        case 2:
+                            AP2_ImageView.setColorFilter(color_green);
+                            Circles[i].setLayoutParams(new FrameLayout.LayoutParams(Diameter[i], Diameter[i]));
+                            Circles[i].setAlpha(0.2f);
+                            Circles[i].setX(coordinate_X_to_Pixel(AP2.getY()) - 1f * Diameter[i] / 2 + 24);
+                            Circles[i].setY(coordinate_Y_to_Pixel(AP2.getX()) - 1f * Diameter[i] / 2 + 24);
+                            break;
+                        case 3:
+                            AP3_ImageView.setColorFilter(color_green);
+                            Circles[i].setLayoutParams(new FrameLayout.LayoutParams(Diameter[i], Diameter[i]));
+                            Circles[i].setAlpha(0.2f);
+                            Circles[i].setX(coordinate_X_to_Pixel(AP3.getY()) - 1f * Diameter[i] / 2 + 24);
+                            Circles[i].setY(coordinate_Y_to_Pixel(AP3.getX()) - 1f * Diameter[i] / 2 + 24);
+                            break;
+                        case 4:
+                            AP4_ImageView.setColorFilter(color_green);
+                            Circles[i].setLayoutParams(new FrameLayout.LayoutParams(Diameter[i], Diameter[i]));
+                            Circles[i].setAlpha(0.2f);
+                            Circles[i].setX(coordinate_X_to_Pixel(AP4.getY()) - 1f * Diameter[i] / 2 + 24);
+                            Circles[i].setY(coordinate_Y_to_Pixel(AP4.getX()) - 1f * Diameter[i] / 2 + 24);
+                            break;
+                        case 5:
+                            AP5_ImageView.setColorFilter(color_green);
+                            Circles[i].setLayoutParams(new FrameLayout.LayoutParams(Diameter[i], Diameter[i]));
+                            Circles[i].setAlpha(0.2f);
+                            Circles[i].setX(coordinate_X_to_Pixel(AP5.getY()) - 1f * Diameter[i] / 2 + 24);
+                            Circles[i].setY(coordinate_Y_to_Pixel(AP5.getX()) - 1f * Diameter[i] / 2 + 24);
+                            break;
+                        case 6:
+                            AP6_ImageView.setColorFilter(color_green);
+                            Circles[i].setLayoutParams(new FrameLayout.LayoutParams(Diameter[i], Diameter[i]));
+                            Circles[i].setAlpha(0.2f);
+                            Circles[i].setX(coordinate_X_to_Pixel(AP6.getY()) - 1f * Diameter[i] / 2 + 24);
+                            Circles[i].setY(coordinate_Y_to_Pixel(AP6.getX()) - 1f * Diameter[i] / 2 + 24);
+                            break;
+                        case 7:
+                            AP7_ImageView.setColorFilter(color_green);
+                            Circles[i].setLayoutParams(new FrameLayout.LayoutParams(Diameter[i], Diameter[i]));
+                            Circles[i].setAlpha(0.2f);
+                            Circles[i].setX(coordinate_X_to_Pixel(AP7.getY()) - 1f * Diameter[i] / 2 + 24);
+                            Circles[i].setY(coordinate_Y_to_Pixel(AP7.getX()) - 1f * Diameter[i] / 2 + 24);
+                            break;
+                        case 8:
+                            AP8_ImageView.setColorFilter(color_green);
+                            Circles[i].setLayoutParams(new FrameLayout.LayoutParams(Diameter[i], Diameter[i]));
+                            Circles[i].setAlpha(0.2f);
+                            Circles[i].setX(coordinate_X_to_Pixel(AP8.getY()) - 1f * Diameter[i] / 2 + 24);
+                            Circles[i].setY(coordinate_Y_to_Pixel(AP8.getX()) - 1f * Diameter[i] / 2 + 24);
+                            break;
+                    }
                 }
             }
         }
@@ -640,6 +594,7 @@ public class LocalisationActivity extends AppCompatActivity implements SensorEve
                                 throws IOException {
                             Location_from_server = Objects.requireNonNull(response.body()).string();
                             //Location_from_server = x y [AP1, AP2, AP3] [Distance1, Distance2, Distance3]
+                            Log.d(TAG,"Location_from_server = " + Location_from_server);
                             response.close();
                             Calculated_coordinates = Location_from_server.split(" ");
 
@@ -650,6 +605,8 @@ public class LocalisationActivity extends AppCompatActivity implements SensorEve
 
                             APList = Location_from_server.substring(APList_start+1,APList_end);
                             DisList = Location_from_server.substring(DisList_start+1,DisList_end);
+                            //Log.d("List",APList);
+                            //Log.d("List",DisList);
                             //Data format: APList = AP1, AP2, AP3 | DisList = Distance1, Distance2, Distance3
                         }
                     });
@@ -708,6 +665,82 @@ public class LocalisationActivity extends AppCompatActivity implements SensorEve
         //IMU_thread.start();
         //wait x ms (only once) before running
         LogRTT_Handler.postDelayed(LogRTT_Runnable,1000);
+    }
+
+    public void onClickChangeVisualisation(View view){
+
+        if (buttonState == 0) {
+            visualiseButton.setText("APs");
+            buttonState = 1;
+
+            Circles[0].setAlpha(0.0f);
+            Circles[1].setAlpha(0.0f);
+            Circles[2].setAlpha(0.0f);
+            /*Circle1_ImageView.setLayoutParams(new FrameLayout.LayoutParams(r[0],r[0]));
+            Circle2_ImageView.setLayoutParams(new FrameLayout.LayoutParams(r[1],r[1]));
+            Circle3_ImageView.setLayoutParams(new FrameLayout.LayoutParams(r[2],r[2]));
+            Circle1_ImageView.setAlpha(50);
+            Circle2_ImageView.setAlpha(50);
+            Circle3_ImageView.setAlpha(50);
+            Circle1_ImageView.setX(coordinate_X_to_Pixel(AP4.getY())-r[0]/2+24);
+            Circle1_ImageView.setY(coordinate_Y_to_Pixel(AP4.getX())-r[0]/2+24);
+            Circle2_ImageView.setX(coordinate_X_to_Pixel(AP5.getY())-r[1]/2+24);
+            Circle2_ImageView.setY(coordinate_Y_to_Pixel(AP5.getX())-r[1]/2+24);
+            Circle3_ImageView.setX(coordinate_X_to_Pixel(AP6.getY())-r[2]/2+24);
+            Circle3_ImageView.setY(coordinate_Y_to_Pixel(AP6.getX())-r[2]/2+24);*/
+
+            Snackbar.make(view, "Highlight APs being used for trilateration", Snackbar.LENGTH_SHORT).show();
+        } else if (buttonState == 1) {
+            visualiseButton.setText("All");
+            buttonState = 2;
+
+//            Circle1_ImageView.setLayoutParams(new FrameLayout.LayoutParams(r[3],r[3]));
+//            Circle2_ImageView.setLayoutParams(new FrameLayout.LayoutParams(r[4],r[4]));
+//            Circle3_ImageView.setLayoutParams(new FrameLayout.LayoutParams(r[5],r[5]));
+//            Circles[0].setAlpha(0.2f);
+//            Circles[1].setAlpha(0.2f);
+//            Circles[2].setAlpha(0.2f);
+//            Circle1_ImageView.setX(coordinate_X_to_Pixel(AP1.getY())-r[3]/2+24);
+//            Circle1_ImageView.setY(coordinate_Y_to_Pixel(AP1.getX())-r[3]/2+24);
+//            Circle2_ImageView.setX(coordinate_X_to_Pixel(AP2.getY())-r[4]/2+24);
+//            Circle2_ImageView.setY(coordinate_Y_to_Pixel(AP2.getX())-r[4]/2+24);
+//            Circle3_ImageView.setX(coordinate_X_to_Pixel(AP3.getY())-r[5]/2+24);
+//            Circle3_ImageView.setY(coordinate_Y_to_Pixel(AP3.getX())-r[5]/2+24);
+
+            Snackbar.make(view, "Highlight APs and draw circle", Snackbar.LENGTH_SHORT).show();
+        } else if (buttonState == 2) {
+            visualiseButton.setText("None");
+            buttonState = 0;
+
+            AP1_ImageView.setColorFilter(color_blue);
+            AP2_ImageView.setColorFilter(color_blue);
+            AP3_ImageView.setColorFilter(color_blue);
+            AP4_ImageView.setColorFilter(color_blue);
+            AP5_ImageView.setColorFilter(color_blue);
+            AP6_ImageView.setColorFilter(color_blue);
+            AP7_ImageView.setColorFilter(color_blue);
+            AP8_ImageView.setColorFilter(color_blue);
+
+            Circles[0].setAlpha(0.0f);
+            Circles[1].setAlpha(0.0f);
+            Circles[2].setAlpha(0.0f);
+
+            //Circle1_ImageView.setLayoutParams(new FrameLayout.LayoutParams(r,r));
+            /*Circle1_ImageView.setLayoutParams(new FrameLayout.LayoutParams(r[0],r[0]));
+            Circle2_ImageView.setLayoutParams(new FrameLayout.LayoutParams(r[4],r[4]));
+            Circle3_ImageView.setLayoutParams(new FrameLayout.LayoutParams(r[2],r[2]));
+            Circle1_ImageView.setAlpha(50);
+            Circle2_ImageView.setAlpha(50);
+            Circle3_ImageView.setAlpha(50);
+            Circle1_ImageView.setX(coordinate_X_to_Pixel(AP7.getY())-r[0]/2+24);
+            Circle1_ImageView.setY(coordinate_Y_to_Pixel(AP7.getX())-r[0]/2+24);
+            Circle2_ImageView.setX(coordinate_X_to_Pixel(AP8.getY())-r[4]/2+24);
+            Circle2_ImageView.setY(coordinate_Y_to_Pixel(AP8.getX())-r[4]/2+24);
+            Circle3_ImageView.setX(coordinate_X_to_Pixel(AP3.getY())-r[2]/2+24);
+            Circle3_ImageView.setY(coordinate_Y_to_Pixel(AP3.getX())-r[2]/2+24);*/
+
+            Snackbar.make(view, "Hide highlighted AP and circle", Snackbar.LENGTH_SHORT).show();
+        }
     }
 
     private void ScanInBackground(){

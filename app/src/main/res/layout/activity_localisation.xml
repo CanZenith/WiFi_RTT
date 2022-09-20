@@ -32,14 +32,35 @@
             android:layout_width="68dp"
             android:layout_height="wrap_content"
             android:ems="10"
-            android:inputType="number" />
+            android:inputType="number"
+            android:rotation="90"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentEnd="true"
+            android:layout_marginTop="20dp"/>
 
         <Button
             android:id="@+id/button2"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="200dp"
-            android:onClick="onClickStartLoggingData"/>
+            android:layout_alignParentTop="true"
+            android:layout_marginTop="100dp"
+            android:layout_alignParentEnd="true"
+            android:layout_marginEnd="-10dp"
+            android:onClick="onClickStartLoggingData"
+            android:rotation="90"/>
+
+        <Button
+            android:id="@+id/btnVisualise"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:rotation="90"
+            android:layout_alignParentBottom="true"
+            android:layout_marginBottom="33dp"
+            android:layout_alignParentEnd="true"
+            android:layout_marginEnd="-10dp"
+            android:text="@string/ChangeVisualisationButton"
+            android:textAllCaps="false"
+            android:onClick="onClickChangeVisualisation"/>
 
     </RelativeLayout>
 
@@ -52,6 +73,27 @@
             android:contentDescription="@string/FloorPlanContentDescription"
             android:scaleType="fitXY"
             android:src="@drawable/floor_plan" />
+
+        <ImageView
+            android:id="@+id/imageViewCircle1"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:contentDescription="@string/TrilaterationCircle"
+            android:src="@drawable/circle" />
+
+        <ImageView
+            android:id="@+id/imageViewCircle2"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:contentDescription="@string/TrilaterationCircle"
+            android:src="@drawable/circle" />
+
+        <ImageView
+            android:id="@+id/imageViewCircle3"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:contentDescription="@string/TrilaterationCircle"
+            android:src="@drawable/circle" />
 
         <ImageView
             android:id="@+id/imageViewLocationPin"
