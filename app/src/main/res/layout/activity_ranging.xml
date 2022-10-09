@@ -22,6 +22,7 @@
         android:layout_width="100dp"
         android:layout_height="wrap_content"
         android:layout_marginBottom="180dp"
+        android:layout_marginEnd="40dp"
         android:ems="10"
         android:importantForAutofill="no"
         android:inputType="number"
@@ -32,14 +33,13 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.444"
-        app:layout_constraintStart_toEndOf="@+id/textViewDelayBeforeNextRequest"
         tools:ignore="SpeakableTextPresentCheck" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewResults"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="40dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textViewRange" />
@@ -49,7 +49,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="56dp"
-        android:layout_marginTop="24dp"
+        android:layout_marginTop="50dp"
         android:text="@string/BSSIDHeader"
         android:textSize="14sp"
         app:layout_constraintStart_toStartOf="parent"
@@ -60,7 +60,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="56dp"
-        android:layout_marginTop="24dp"
+        android:layout_marginTop="50dp"
         android:text="@string/RangeHeader"
         android:textSize="14sp"
         app:layout_constraintStart_toEndOf="@+id/textViewBSSID_Header"
@@ -71,7 +71,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="4dp"
-        android:layout_marginTop="24dp"
+        android:layout_marginTop="50dp"
         android:text="@string/Range_SDHeader"
         android:textSize="14sp"
         app:layout_constraintStart_toEndOf="@+id/textViewRange"
@@ -81,7 +81,7 @@
         android:id="@+id/textViewRSS"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
+        android:layout_marginTop="50dp"
         android:text="@string/RSSHeader"
         android:textSize="14sp"
         app:layout_constraintEnd_toEndOf="parent"
@@ -175,6 +175,7 @@
         android:layout_height="wrap_content"
         android:onClick="onClickBackgroundScan"
         android:text="@string/BackgroundScanButton"
+        android:textAllCaps="false"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/btnLogRTT"
         app:layout_constraintStart_toStartOf="parent"
@@ -184,9 +185,10 @@
         android:id="@+id/btnLogRTT"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="60dp"
+        android:layout_marginStart="70dp"
         android:onClick="onClickLogData"
         android:text="@string/LogButton"
+        android:textAllCaps="false"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textViewDelayBeforeNextRequest"
@@ -196,14 +198,16 @@
         android:id="@+id/btnLogRTT_csv"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="60dp"
+        android:layout_marginEnd="70dp"
         android:onClick="onClickLogDataCsv"
         android:text="@string/LogButtonCsv"
+        android:textAllCaps="false"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintLeft_toRightOf="@+id/btnLogRTT"
         app:layout_constraintTop_toBottomOf="@+id/textViewDelayBeforeNextRequest"
         app:layout_constraintVertical_bias="0.3"/>
+
     <EditText
         android:id="@+id/editTextServer"
         android:layout_width="100dp"
@@ -214,7 +218,7 @@
         android:textAlignment="center"
         app:layout_constraintBottom_toTopOf="@+id/textViewDelayBeforeNextRequest"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/textViewServerURL" />
+        android:layout_marginEnd="40dp" />
 
     <TextView
         android:id="@+id/textViewServerURL"
@@ -222,6 +226,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="64dp"
         android:layout_marginBottom="32dp"
+        android:textSize="16sp"
         android:text="@string/ServerURLbit"
         app:layout_constraintBottom_toTopOf="@+id/textViewDelayBeforeNextRequest"
         app:layout_constraintStart_toStartOf="parent" />
@@ -230,8 +235,9 @@
         android:id="@+id/textViewCheckPointCount"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="80dp"
+        android:layout_marginStart="64dp"
         android:layout_marginBottom="32dp"
+        android:textSize="16sp"
         android:text="@string/CheckPointCounts"
         app:layout_constraintBottom_toTopOf="@+id/textViewServerURL"
         app:layout_constraintStart_toStartOf="parent" />
@@ -240,8 +246,9 @@
         android:id="@+id/textViewCounts"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="96dp"
+        android:layout_marginEnd="90dp"
         android:layout_marginBottom="16dp"
+        android:textSize="16sp"
         android:text="0"
         app:layout_constraintBottom_toTopOf="@+id/editTextServer"
         app:layout_constraintEnd_toEndOf="parent" />

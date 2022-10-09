@@ -10,6 +10,8 @@
     <string name="BSSIDHeader">BSSID</string>
     <string name="StartPositioningButton">Start Positioning Office</string>
     <string name="StartPositioningMechanical">Start Positioning Mechanical</string>
+    <string name="NavigationDrawerOpen">Open Navigation Drawer</string>
+    <string name="NavigationDrawerClose">Close Navigation Drawer</string>
 
     <!-- LocationPermissionRequest -->
     <string name="ActivityPermissionRequestLabel">Location permission request</string>
@@ -22,8 +24,8 @@
     <string name="ActivityRangingLabel">Show ranging results</string>
     <string name="DelayBeforeNextRequest">RTT Ranging Delay (ms)</string>
     <string name="DelayHint">1000</string>
-    <string name="LogButton">Start logging</string>
-    <string name="LogButtonCsv">Export data</string>
+    <string name="LogButton">Start Logging</string>
+    <string name="LogButtonCsv">Export Data</string>
     <string name="RangeHeader">Range(mm)</string>
     <string name="Range_SDHeader">Range_SD(mm)</string>
     <string name="RSSHeader">RSS(dB)</string>
@@ -45,7 +47,7 @@
 
     <!-- LocalisationActivity -->
     <string name="ActivityLocalisationLabel">Localisation based on floor plan</string>
-    <string name="StartUpdatingLocationButton">Start Updating Location</string>
+    <string name="StartUpdatingLocationButton">Start</string>
     <string name="ChangeVisualisationButton">None</string>
 
     <!-- activity_localization.xml -->

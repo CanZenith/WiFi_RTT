@@ -137,7 +137,6 @@ public class LocalisationActivity_mechanical extends AppCompatActivity implement
     protected void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         Log.d(TAG,"onCreate() LocalisationActivity_Mechanical");
-        Objects.requireNonNull(getSupportActionBar()).hide();
 
         //receive RTT_APs from main activity
         Intent intent = getIntent();

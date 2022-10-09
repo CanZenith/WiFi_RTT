@@ -142,6 +142,7 @@ public class RangingActivity extends AppCompatActivity implements SensorEventLis
         } else {
 
             setContentView(R.layout.activity_ranging);
+            getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
 
             RecyclerView myRecyclerView = findViewById(R.id.recyclerViewResults);
             myRecyclerView.setHasFixedSize(true);
@@ -258,11 +259,11 @@ public class RangingActivity extends AppCompatActivity implements SensorEventLis
 
             if (!logging) {
                 Snackbar.make(view, "Start sending data", Snackbar.LENGTH_SHORT).show();
-                logging_button_text.setText("Stop logging");
+                logging_button_text.setText("Stop Logging");
 
             } else {
                 Snackbar.make(view, "Stop sending data", Snackbar.LENGTH_SHORT).show();
-                logging_button_text.setText("Start logging");
+                logging_button_text.setText("Start Logging");
                 Check_Point_Counts = 0;
                 Counts.setText(String.valueOf(Check_Point_Counts));
             }

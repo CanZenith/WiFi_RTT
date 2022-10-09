@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -12,6 +13,7 @@ import android.graphics.Color;
 import android.graphics.DashPathEffect;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.Point;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -26,7 +28,9 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.SystemClock;
 import android.util.Log;
+import android.view.Display;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
@@ -40,7 +44,6 @@ import com.google.android.material.snackbar.Snackbar;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -80,6 +83,9 @@ public class LocalisationActivity extends AppCompatActivity implements SensorEve
     private int buttonState = 0;
     private Button visualiseButton;
 
+    private float meter2pixel;
+    private int screenHeight, screenWidth, bitmapHeight, bitmapWidth, Bias_Y;
+
     /**
      * For IMU service
      */
@@ -104,33 +110,20 @@ public class LocalisationActivity extends AppCompatActivity implements SensorEve
      * For Localisation service
      */
     private Paint paint;
-    private Paint paint_circle;
     private Path path;
     private Bitmap temp_bitmap;
     private Canvas temp_canvas;
-    //private Canvas circle_canvas;
     
-    private ImageView floor_plan, location_pin, AP1_ImageView, AP2_ImageView,
-            AP3_ImageView, AP4_ImageView, AP5_ImageView, AP6_ImageView, AP7_ImageView,
-            AP8_ImageView, Circle1_ImageView, Circle2_ImageView, Circle3_ImageView;
-    private ImageView[] Circles = new ImageView[3];
+    private ImageView floor_plan, location_pin, AP1_ImageView, AP2_ImageView, AP3_ImageView,
+            AP4_ImageView, AP5_ImageView, AP6_ImageView, AP7_ImageView, AP8_ImageView;
+    private final ImageView[] Circles = new ImageView[3];
 
     private TextView LocationX, LocationY;
-
-    /*
-    int[] floor_plan_location = new int[2];
-    int[] AP_location = new int[2];
-    int[] pin_location = new int[2];
-    double meter2pixel = 32.53275; // 1 meter <--> 32.53275 pixels for THIS PARTICULAR FLOOR PLAN!
-    double screen_offsetX = 241; //in pixels
-     */
 
     int start_localisation = 0;
     int color_blue = Color.parseColor("#0000FF");
     int color_green = Color.parseColor("#00FF00");
     int APList_start, APList_end, DisList_start, DisList_end;
-
-    //int[] r = {200,300,400,500,600,700};
 
     private String Location_from_server;
     private String APList, DisList;
@@ -146,15 +139,6 @@ public class LocalisationActivity extends AppCompatActivity implements SensorEve
     private final AccessPoint AP7 = new AccessPoint("14:22:3b:2a:86:f5",39.31,5.6);
     private final AccessPoint AP8 = new AccessPoint("14:22:3b:16:5a:bd",50.43,5.6);
 
-/*
-    private final AccessPoint AP1 = new AccessPoint("b0:e4:d5:39:26:89",9.683,19.427);
-    private final AccessPoint AP3 = new AccessPoint("b0:e4:d5:01:26:f5",15.4,16.633);
-    private final AccessPoint AP4 = new AccessPoint("b0:e4:d5:91:ba:5d",15.4,10.707);
-    private final AccessPoint AP5 = new AccessPoint("b0:e4:d5:96:3b:95",12.08,5.6);
-    private final AccessPoint AP7 = new AccessPoint("14:22:3b:2a:86:f5",8.361,10.664);
-
- */
-
     //flag for leaving the activity
     private Boolean Running = true;
 
@@ -162,7 +146,6 @@ public class LocalisationActivity extends AppCompatActivity implements SensorEve
     protected void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         Log.d(TAG,"onCreate() LocalizationActivity");
-        Objects.requireNonNull(getSupportActionBar()).hide();
 
         //receive RTT_APs from main activity
         Intent intent = getIntent();
@@ -177,6 +160,17 @@ public class LocalisationActivity extends AppCompatActivity implements SensorEve
             finish();
         } else {
             setContentView(R.layout.activity_localisation);
+
+            //Change to landscape and full screen immersive mode
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+            getWindow().getDecorView().setSystemUiVisibility(
+                    View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY |
+                    View.SYSTEM_UI_FLAG_FULLSCREEN |
+                    View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
+                    View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN |
+                    View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION |
+                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
+
             visualiseButton = findViewById(R.id.btnVisualise);
 
             //RTT Initiation
@@ -209,27 +203,39 @@ public class LocalisationActivity extends AppCompatActivity implements SensorEve
             AP6_ImageView = findViewById(R.id.imageViewAP6);
             AP7_ImageView = findViewById(R.id.imageViewAP7);
             AP8_ImageView = findViewById(R.id.imageViewAP8);
-            Circle1_ImageView = findViewById(R.id.imageViewCircle1);
-            Circle2_ImageView = findViewById(R.id.imageViewCircle2);
-            Circle3_ImageView = findViewById(R.id.imageViewCircle3);
-
-            Circles[0] = Circle1_ImageView;
-            Circles[1] = Circle2_ImageView;
-            Circles[2] = Circle3_ImageView;
+            Circles[0] = findViewById(R.id.imageViewCircle1);
+            Circles[1] = findViewById(R.id.imageViewCircle2);
+            Circles[2] = findViewById(R.id.imageViewCircle3);
 
             LocationX = findViewById(R.id.textViewLocationX);
             LocationY = findViewById(R.id.textViewLocationY);
 
+            WindowManager windowManager = getWindow().getWindowManager();
+            Display display = windowManager.getDefaultDisplay();
+            Point point = new Point();
+            display.getRealSize(point);
+            screenWidth = point.x;
+            screenHeight = point.y;
+            Log.d("window","屏幕宽度："+screenWidth);
+            Log.d("window","屏幕高度："+screenHeight);
+
+            meter2pixel = screenWidth/75.01f;
+            Bias_Y = Math.round((screenHeight - screenWidth/3.6f)/2);
+
             Bitmap bitmap_floor_plan = BitmapFactory.decodeResource(getResources(),
-                    R.drawable.floor_plan);
+                    R.drawable.floor_plan_landscape);
             temp_bitmap = Bitmap.createBitmap(bitmap_floor_plan.getWidth(),
                     bitmap_floor_plan.getHeight(),Bitmap.Config.RGB_565);
+
+            bitmapWidth = bitmap_floor_plan.getWidth();
+            bitmapHeight = bitmap_floor_plan.getHeight();
+            Log.d("window","Bitmap宽度："+bitmapWidth);
+            Log.d("window","Bitmap高度："+bitmapHeight);
 
             temp_canvas = new Canvas(temp_bitmap);
             temp_canvas.drawBitmap(bitmap_floor_plan,0,0,null);
 
             paint = new Paint();
-            paint_circle = new Paint();
             path = new Path();
 
             paint.setAntiAlias(true);
@@ -237,10 +243,6 @@ public class LocalisationActivity extends AppCompatActivity implements SensorEve
             paint.setStyle(Paint.Style.STROKE);
             paint.setStrokeWidth(10);
             paint.setPathEffect(new DashPathEffect(new float[] {20,10,10,10},1));
-
-            paint_circle.setColor(Color.MAGENTA);
-            paint_circle.setStyle(Paint.Style.STROKE);
-            paint_circle.setStrokeWidth(10);
 
             //Start Localisation
             setup_pin_location();
@@ -276,7 +278,7 @@ public class LocalisationActivity extends AppCompatActivity implements SensorEve
 
  */
 
-    /** To calculate coordinates
+    /** To calculate coordinates (deprecated)
      * top left corner of the screen = setX/Y(0,0) = Pin location(55,136)
      * top left corner of the floor plan (240,136)
      * SetY(-26) > left edge of the floor plan
@@ -290,47 +292,71 @@ public class LocalisationActivity extends AppCompatActivity implements SensorEve
      * path.moveTo/lineTo( (y*32.533*bitmap2floorplan / Pin_y*bitmap2floorplan), ((x*32.533+26)*bitmap2floorplan) )
      */
 
-    private float coordinate_X_to_Pixel(double Y){
-        return (float) (Y*30+240);
+    /** ============================================================================================
+     * -----新坐标系统-----
+     * 横屏模式下，坐标原点为手机右上角，垂直方向为x轴，水平方向为y轴
+     * 屏幕可用像素：宽（长边） = window_width, 高（短边） = window_height
+     * 像素：Floorplan的总宽 = window_width, 宽高比 = 2341/650 = 3.6, Floorplan的总高 = window_width/3.6
+     * 现实：Floorplan的尺寸 = 75.01m * 20.79m, 现实转换为像素：meter2pixel = window_width/75.01
+     * x轴的偏置 = 0, y轴的偏置 = (window_height - Floorplan的总宽)/2
+     * Bitmap的宽高：宽（长边） = bitmapWidth, 高（短边） = bitmapHeight
+     *
+     * -----转换公式-----
+     * Pin Location：
+     * setX = x * meter2pixel, setY = window_height - (y * meter2pixel + y轴偏置)
+     *
+     * Path Effect:
+     * setX = x/75.01 * bitmapWidth, setY = y/20.79 * bitmapHeight
+     * =============================================================================================
+     */
+
+    private float coordinate_X_to_Pixel(double X){
+        return (float) (X*meter2pixel);
     }
 
-    private float coordinate_Y_to_Pixel(double X){
-        return (float) (X*30-26);
+    private float coordinate_Y_to_Pixel(double Y){
+        return (float) (screenHeight - (Y * meter2pixel + Bias_Y));
     }
 
-    private float coordinate_X_to_bitmap(double Y){
-        return (float) (Y*1788/20);
+    private float coordinate_X_to_bitmap(double X){
+        return (float) (X*bitmapWidth/75.01);
     }
 
-    private float coordinate_Y_to_bitmap(double X){
-        return (float) (X*6438/72);
+    private float coordinate_Y_to_bitmap(double Y){
+        return (float) (bitmapHeight - (Y*bitmapHeight/20.79));
     }
 
     private void setup_pin_location(){
-        AP1_ImageView.setX(coordinate_X_to_Pixel(AP1.getY())); //x=662
-        AP1_ImageView.setY(coordinate_Y_to_Pixel(AP1.getX())); //y=1037
-        AP2_ImageView.setX(coordinate_X_to_Pixel(AP2.getY()));
-        AP2_ImageView.setY(coordinate_Y_to_Pixel(AP2.getX()));
-        AP3_ImageView.setX(coordinate_X_to_Pixel(AP3.getY()));
-        AP3_ImageView.setY(coordinate_Y_to_Pixel(AP3.getX()));
-        AP4_ImageView.setX(coordinate_X_to_Pixel(AP4.getY()));
-        AP4_ImageView.setY(coordinate_Y_to_Pixel(AP4.getX()));
-        AP5_ImageView.setX(coordinate_X_to_Pixel(AP5.getY()));
-        AP5_ImageView.setY(coordinate_Y_to_Pixel(AP5.getX()));
-        AP6_ImageView.setX(coordinate_X_to_Pixel(AP6.getY()));
-        AP6_ImageView.setY(coordinate_Y_to_Pixel(AP6.getX()));
-        AP7_ImageView.setX(coordinate_X_to_Pixel(AP7.getY()));
-        AP7_ImageView.setY(coordinate_Y_to_Pixel(AP7.getX()));
-        AP8_ImageView.setX(coordinate_X_to_Pixel(AP8.getY()));
-        AP8_ImageView.setY(coordinate_Y_to_Pixel(AP8.getX()));
+        AP1_ImageView.setX(coordinate_X_to_Pixel(AP1.getX()));
+        AP1_ImageView.setY(coordinate_Y_to_Pixel(AP1.getY()));
+        AP2_ImageView.setX(coordinate_X_to_Pixel(AP2.getX()));
+        AP2_ImageView.setY(coordinate_Y_to_Pixel(AP2.getY()));
+        AP3_ImageView.setX(coordinate_X_to_Pixel(AP3.getX()));
+        AP3_ImageView.setY(coordinate_Y_to_Pixel(AP3.getY()));
+        AP4_ImageView.setX(coordinate_X_to_Pixel(AP4.getX()));
+        AP4_ImageView.setY(coordinate_Y_to_Pixel(AP4.getY()));
+        AP5_ImageView.setX(coordinate_X_to_Pixel(AP5.getX()));
+        AP5_ImageView.setY(coordinate_Y_to_Pixel(AP5.getY()));
+        AP6_ImageView.setX(coordinate_X_to_Pixel(AP6.getX()));
+        AP6_ImageView.setY(coordinate_Y_to_Pixel(AP6.getY()));
+        AP7_ImageView.setX(coordinate_X_to_Pixel(AP7.getX()));
+        AP7_ImageView.setY(coordinate_Y_to_Pixel(AP7.getY()));
+        AP8_ImageView.setX(coordinate_X_to_Pixel(AP8.getX()));
+        AP8_ImageView.setY(coordinate_Y_to_Pixel(AP8.getY()));
 
         Circles[0].setAlpha(0.0f);
         Circles[1].setAlpha(0.0f);
         Circles[2].setAlpha(0.0f);
 
+//        Circles[0].setVisibility(View.GONE);
+//        Circles[1].setVisibility(View.GONE);
+//        Circles[2].setVisibility(View.GONE);
+
         //my desk
-        location_pin.setX(coordinate_X_to_Pixel(14.66));
-        location_pin.setY(coordinate_Y_to_Pixel(42));
+//        location_pin.setX(coordinate_X_to_Pixel(42));
+//        location_pin.setY(coordinate_Y_to_Pixel(14.66));
+        location_pin.setX(coordinate_X_to_Pixel(0));
+        location_pin.setY(coordinate_Y_to_Pixel(0));
     }
 
     //TODO animated drawable?
@@ -354,8 +380,8 @@ public class LocalisationActivity extends AppCompatActivity implements SensorEve
                             LocationY.setText(String.format(Locale.getDefault(),
                                     "%.2f",Double.valueOf(Calculated_coordinates[1])));
 
-                            location_pin.setX(coordinate_X_to_Pixel(Double.parseDouble(Calculated_coordinates[1])));
-                            location_pin.setY(coordinate_Y_to_Pixel(Double.parseDouble(Calculated_coordinates[0])));
+                            location_pin.setX(coordinate_X_to_Pixel(Double.parseDouble(Calculated_coordinates[0])));
+                            location_pin.setY(coordinate_Y_to_Pixel(Double.parseDouble(Calculated_coordinates[1])));
 
                             Log.d("Location information","Location X: " + Calculated_coordinates[0]
                                     + "Location Y: " + Calculated_coordinates[1]);
@@ -372,14 +398,14 @@ public class LocalisationActivity extends AppCompatActivity implements SensorEve
                             LocationY.setText(String.format(Locale.getDefault(),
                                     "%.2f", Double.valueOf(Calculated_coordinates[1])));
 
-                            path.moveTo(coordinate_X_to_bitmap(Double.parseDouble(Previous_location_for_line_drawing[1])),
-                                    coordinate_Y_to_bitmap(Double.parseDouble(Previous_location_for_line_drawing[0])));
+                            path.moveTo(coordinate_X_to_bitmap(Double.parseDouble(Previous_location_for_line_drawing[0])),
+                                    coordinate_Y_to_bitmap(Double.parseDouble(Previous_location_for_line_drawing[1])));
 
-                            location_pin.setX(coordinate_X_to_Pixel(Double.parseDouble(Calculated_coordinates[1])));
-                            location_pin.setY(coordinate_Y_to_Pixel(Double.parseDouble(Calculated_coordinates[0])));
+                            location_pin.setX(coordinate_X_to_Pixel(Double.parseDouble(Calculated_coordinates[0])));
+                            location_pin.setY(coordinate_Y_to_Pixel(Double.parseDouble(Calculated_coordinates[1])));
 
-                            path.lineTo(coordinate_X_to_bitmap(Double.parseDouble(Calculated_coordinates[1])),
-                                    coordinate_Y_to_bitmap(Double.parseDouble(Calculated_coordinates[0])));
+                            path.lineTo(coordinate_X_to_bitmap(Double.parseDouble(Calculated_coordinates[0])),
+                                    coordinate_Y_to_bitmap(Double.parseDouble(Calculated_coordinates[1])));
                             temp_canvas.drawPath(path, paint);
                             floor_plan.setImageBitmap(temp_bitmap);
 
@@ -421,14 +447,14 @@ public class LocalisationActivity extends AppCompatActivity implements SensorEve
             float[] Dis_List_float = new float[Dis_List.length];
             int[] Diameter = new int[Dis_List.length];
 
-            Log.d("Location information","Location X/Y: "+Calculated_coordinates[0]+ ", "
-                    +Calculated_coordinates[1]+", AP: "+APList+", Distance: "+DisList);
+            Log.d("Location information","Location X/Y: "+Calculated_coordinates[0] + ", "
+                    +Calculated_coordinates[1] + ", AP: " + APList + ", Distance: " + DisList);
 
             //Transfer String[] to int[] and float[], convert distance from meter to pixel
             for (int j = 0; j < AP_List.length; j++) {
                 AP_List_int[j] = Integer.parseInt(AP_List[j]);
                 Dis_List_float[j] = Float.parseFloat(Dis_List[j]);
-                Diameter[j] = Math.round(2 * 32.53f * Dis_List_float[j]);
+                Diameter[j] = Math.round(2 * meter2pixel * Dis_List_float[j]);
             }
 
             if (buttonState == 1) {
@@ -469,57 +495,57 @@ public class LocalisationActivity extends AppCompatActivity implements SensorEve
                             AP1_ImageView.setColorFilter(color_green);
                             Circles[i].setLayoutParams(new FrameLayout.LayoutParams(Diameter[i], Diameter[i]));
                             Circles[i].setAlpha(0.2f);
-                            Circles[i].setX(coordinate_X_to_Pixel(AP1.getY()) - 1f * Diameter[i] / 2 + 24);
-                            Circles[i].setY(coordinate_Y_to_Pixel(AP1.getX()) - 1f * Diameter[i] / 2 + 24);
+                            Circles[i].setX(coordinate_X_to_Pixel(AP1.getX()) - 1f * Diameter[i] / 2 + 24);
+                            Circles[i].setY(coordinate_Y_to_Pixel(AP1.getY()) - 1f * Diameter[i] / 2 + 24);
                             break;
                         case 2:
                             AP2_ImageView.setColorFilter(color_green);
                             Circles[i].setLayoutParams(new FrameLayout.LayoutParams(Diameter[i], Diameter[i]));
                             Circles[i].setAlpha(0.2f);
-                            Circles[i].setX(coordinate_X_to_Pixel(AP2.getY()) - 1f * Diameter[i] / 2 + 24);
-                            Circles[i].setY(coordinate_Y_to_Pixel(AP2.getX()) - 1f * Diameter[i] / 2 + 24);
+                            Circles[i].setX(coordinate_X_to_Pixel(AP2.getX()) - 1f * Diameter[i] / 2 + 24);
+                            Circles[i].setY(coordinate_Y_to_Pixel(AP2.getY()) - 1f * Diameter[i] / 2 + 24);
                             break;
                         case 3:
                             AP3_ImageView.setColorFilter(color_green);
                             Circles[i].setLayoutParams(new FrameLayout.LayoutParams(Diameter[i], Diameter[i]));
                             Circles[i].setAlpha(0.2f);
-                            Circles[i].setX(coordinate_X_to_Pixel(AP3.getY()) - 1f * Diameter[i] / 2 + 24);
-                            Circles[i].setY(coordinate_Y_to_Pixel(AP3.getX()) - 1f * Diameter[i] / 2 + 24);
+                            Circles[i].setX(coordinate_X_to_Pixel(AP3.getX()) - 1f * Diameter[i] / 2 + 24);
+                            Circles[i].setY(coordinate_Y_to_Pixel(AP3.getY()) - 1f * Diameter[i] / 2 + 24);
                             break;
                         case 4:
                             AP4_ImageView.setColorFilter(color_green);
                             Circles[i].setLayoutParams(new FrameLayout.LayoutParams(Diameter[i], Diameter[i]));
                             Circles[i].setAlpha(0.2f);
-                            Circles[i].setX(coordinate_X_to_Pixel(AP4.getY()) - 1f * Diameter[i] / 2 + 24);
-                            Circles[i].setY(coordinate_Y_to_Pixel(AP4.getX()) - 1f * Diameter[i] / 2 + 24);
+                            Circles[i].setX(coordinate_X_to_Pixel(AP4.getX()) - 1f * Diameter[i] / 2 + 24);
+                            Circles[i].setY(coordinate_Y_to_Pixel(AP4.getY()) - 1f * Diameter[i] / 2 + 24);
                             break;
                         case 5:
                             AP5_ImageView.setColorFilter(color_green);
                             Circles[i].setLayoutParams(new FrameLayout.LayoutParams(Diameter[i], Diameter[i]));
                             Circles[i].setAlpha(0.2f);
-                            Circles[i].setX(coordinate_X_to_Pixel(AP5.getY()) - 1f * Diameter[i] / 2 + 24);
-                            Circles[i].setY(coordinate_Y_to_Pixel(AP5.getX()) - 1f * Diameter[i] / 2 + 24);
+                            Circles[i].setX(coordinate_X_to_Pixel(AP5.getX()) - 1f * Diameter[i] / 2 + 24);
+                            Circles[i].setY(coordinate_Y_to_Pixel(AP5.getY()) - 1f * Diameter[i] / 2 + 24);
                             break;
                         case 6:
                             AP6_ImageView.setColorFilter(color_green);
                             Circles[i].setLayoutParams(new FrameLayout.LayoutParams(Diameter[i], Diameter[i]));
                             Circles[i].setAlpha(0.2f);
-                            Circles[i].setX(coordinate_X_to_Pixel(AP6.getY()) - 1f * Diameter[i] / 2 + 24);
-                            Circles[i].setY(coordinate_Y_to_Pixel(AP6.getX()) - 1f * Diameter[i] / 2 + 24);
+                            Circles[i].setX(coordinate_X_to_Pixel(AP6.getX()) - 1f * Diameter[i] / 2 + 24);
+                            Circles[i].setY(coordinate_Y_to_Pixel(AP6.getY()) - 1f * Diameter[i] / 2 + 24);
                             break;
                         case 7:
                             AP7_ImageView.setColorFilter(color_green);
                             Circles[i].setLayoutParams(new FrameLayout.LayoutParams(Diameter[i], Diameter[i]));
                             Circles[i].setAlpha(0.2f);
-                            Circles[i].setX(coordinate_X_to_Pixel(AP7.getY()) - 1f * Diameter[i] / 2 + 24);
-                            Circles[i].setY(coordinate_Y_to_Pixel(AP7.getX()) - 1f * Diameter[i] / 2 + 24);
+                            Circles[i].setX(coordinate_X_to_Pixel(AP7.getX()) - 1f * Diameter[i] / 2 + 24);
+                            Circles[i].setY(coordinate_Y_to_Pixel(AP7.getY()) - 1f * Diameter[i] / 2 + 24);
                             break;
                         case 8:
                             AP8_ImageView.setColorFilter(color_green);
                             Circles[i].setLayoutParams(new FrameLayout.LayoutParams(Diameter[i], Diameter[i]));
                             Circles[i].setAlpha(0.2f);
-                            Circles[i].setX(coordinate_X_to_Pixel(AP8.getY()) - 1f * Diameter[i] / 2 + 24);
-                            Circles[i].setY(coordinate_Y_to_Pixel(AP8.getX()) - 1f * Diameter[i] / 2 + 24);
+                            Circles[i].setX(coordinate_X_to_Pixel(AP8.getX()) - 1f * Diameter[i] / 2 + 24);
+                            Circles[i].setY(coordinate_Y_to_Pixel(AP8.getY()) - 1f * Diameter[i] / 2 + 24);
                             break;
                     }
                 }
@@ -669,6 +695,8 @@ public class LocalisationActivity extends AppCompatActivity implements SensorEve
 
     public void onClickChangeVisualisation(View view){
 
+        //int[] r = {200,300,400,500,600,700};
+
         if (buttonState == 0) {
             visualiseButton.setText("APs");
             buttonState = 1;
@@ -676,18 +704,25 @@ public class LocalisationActivity extends AppCompatActivity implements SensorEve
             Circles[0].setAlpha(0.0f);
             Circles[1].setAlpha(0.0f);
             Circles[2].setAlpha(0.0f);
+
             /*Circle1_ImageView.setLayoutParams(new FrameLayout.LayoutParams(r[0],r[0]));
             Circle2_ImageView.setLayoutParams(new FrameLayout.LayoutParams(r[1],r[1]));
             Circle3_ImageView.setLayoutParams(new FrameLayout.LayoutParams(r[2],r[2]));
-            Circle1_ImageView.setAlpha(50);
-            Circle2_ImageView.setAlpha(50);
-            Circle3_ImageView.setAlpha(50);
-            Circle1_ImageView.setX(coordinate_X_to_Pixel(AP4.getY())-r[0]/2+24);
-            Circle1_ImageView.setY(coordinate_Y_to_Pixel(AP4.getX())-r[0]/2+24);
-            Circle2_ImageView.setX(coordinate_X_to_Pixel(AP5.getY())-r[1]/2+24);
-            Circle2_ImageView.setY(coordinate_Y_to_Pixel(AP5.getX())-r[1]/2+24);
-            Circle3_ImageView.setX(coordinate_X_to_Pixel(AP6.getY())-r[2]/2+24);
-            Circle3_ImageView.setY(coordinate_Y_to_Pixel(AP6.getX())-r[2]/2+24);*/
+            Circle1_ImageView.setAlpha(0.2f);
+            Circle2_ImageView.setAlpha(0.2f);
+            Circle3_ImageView.setAlpha(0.2f);
+            Circle1_ImageView.setX(coordinate_X_to_Pixel(AP4.getX())-r[0]/2+24);
+            Circle1_ImageView.setY(coordinate_Y_to_Pixel(AP4.getY())-r[0]/2+24);
+            Circle2_ImageView.setX(coordinate_X_to_Pixel(AP5.getX())-r[1]/2+24);
+            Circle2_ImageView.setY(coordinate_Y_to_Pixel(AP5.getY())-r[1]/2+24);
+            Circle3_ImageView.setX(coordinate_X_to_Pixel(AP6.getX())-r[2]/2+24);
+            Circle3_ImageView.setY(coordinate_Y_to_Pixel(AP6.getY())-r[2]/2+24);*/
+
+            path.moveTo(coordinate_X_to_bitmap(0), coordinate_Y_to_bitmap(0));
+            path.lineTo(coordinate_X_to_bitmap(0), coordinate_Y_to_bitmap(0));
+
+            temp_canvas.drawPath(path, paint);
+            floor_plan.setImageBitmap(temp_bitmap);
 
             Snackbar.make(view, "Highlight APs being used for trilateration", Snackbar.LENGTH_SHORT).show();
         } else if (buttonState == 1) {
@@ -700,12 +735,18 @@ public class LocalisationActivity extends AppCompatActivity implements SensorEve
 //            Circles[0].setAlpha(0.2f);
 //            Circles[1].setAlpha(0.2f);
 //            Circles[2].setAlpha(0.2f);
-//            Circle1_ImageView.setX(coordinate_X_to_Pixel(AP1.getY())-r[3]/2+24);
-//            Circle1_ImageView.setY(coordinate_Y_to_Pixel(AP1.getX())-r[3]/2+24);
-//            Circle2_ImageView.setX(coordinate_X_to_Pixel(AP2.getY())-r[4]/2+24);
-//            Circle2_ImageView.setY(coordinate_Y_to_Pixel(AP2.getX())-r[4]/2+24);
-//            Circle3_ImageView.setX(coordinate_X_to_Pixel(AP3.getY())-r[5]/2+24);
-//            Circle3_ImageView.setY(coordinate_Y_to_Pixel(AP3.getX())-r[5]/2+24);
+//            Circle1_ImageView.setX(coordinate_X_to_Pixel(AP1.getX())-r[3]/2+24);
+//            Circle1_ImageView.setY(coordinate_Y_to_Pixel(AP1.getY())-r[3]/2+24);
+//            Circle2_ImageView.setX(coordinate_X_to_Pixel(AP2.getX())-r[4]/2+24);
+//            Circle2_ImageView.setY(coordinate_Y_to_Pixel(AP2.getY())-r[4]/2+24);
+//            Circle3_ImageView.setX(coordinate_X_to_Pixel(AP3.getX())-r[5]/2+24);
+//            Circle3_ImageView.setY(coordinate_Y_to_Pixel(AP3.getY())-r[5]/2+24);
+
+            path.moveTo(coordinate_X_to_bitmap(10), coordinate_Y_to_bitmap(10));
+            path.lineTo(coordinate_X_to_bitmap(10), coordinate_Y_to_bitmap(10));
+
+            temp_canvas.drawPath(path, paint);
+            floor_plan.setImageBitmap(temp_bitmap);
 
             Snackbar.make(view, "Highlight APs and draw circle", Snackbar.LENGTH_SHORT).show();
         } else if (buttonState == 2) {
@@ -725,19 +766,20 @@ public class LocalisationActivity extends AppCompatActivity implements SensorEve
             Circles[1].setAlpha(0.0f);
             Circles[2].setAlpha(0.0f);
 
-            //Circle1_ImageView.setLayoutParams(new FrameLayout.LayoutParams(r,r));
-            /*Circle1_ImageView.setLayoutParams(new FrameLayout.LayoutParams(r[0],r[0]));
+            /*Circle1_ImageView.setVisibility(View.INVISIBLE);
+            Circle2_ImageView.setVisibility(View.GONE);
+            Circle1_ImageView.setLayoutParams(new FrameLayout.LayoutParams(r[0],r[0]));
             Circle2_ImageView.setLayoutParams(new FrameLayout.LayoutParams(r[4],r[4]));
             Circle3_ImageView.setLayoutParams(new FrameLayout.LayoutParams(r[2],r[2]));
-            Circle1_ImageView.setAlpha(50);
-            Circle2_ImageView.setAlpha(50);
-            Circle3_ImageView.setAlpha(50);
-            Circle1_ImageView.setX(coordinate_X_to_Pixel(AP7.getY())-r[0]/2+24);
-            Circle1_ImageView.setY(coordinate_Y_to_Pixel(AP7.getX())-r[0]/2+24);
-            Circle2_ImageView.setX(coordinate_X_to_Pixel(AP8.getY())-r[4]/2+24);
-            Circle2_ImageView.setY(coordinate_Y_to_Pixel(AP8.getX())-r[4]/2+24);
-            Circle3_ImageView.setX(coordinate_X_to_Pixel(AP3.getY())-r[2]/2+24);
-            Circle3_ImageView.setY(coordinate_Y_to_Pixel(AP3.getX())-r[2]/2+24);*/
+            Circle1_ImageView.setAlpha(0.2f);
+            Circle2_ImageView.setAlpha(0.2f);
+            Circle3_ImageView.setAlpha(0.2f);
+            Circle1_ImageView.setX(coordinate_X_to_Pixel(AP7.getX())-r[0]/2+24);
+            Circle1_ImageView.setY(coordinate_Y_to_Pixel(AP7.getY())-r[0]/2+24);
+            Circle2_ImageView.setX(coordinate_X_to_Pixel(AP8.getX())-r[4]/2+24);
+            Circle2_ImageView.setY(coordinate_Y_to_Pixel(AP8.getY())-r[4]/2+24);
+            Circle3_ImageView.setX(coordinate_X_to_Pixel(AP3.getX())-r[2]/2+24);
+            Circle3_ImageView.setY(coordinate_Y_to_Pixel(AP3.getY())-r[2]/2+24);*/
 
             Snackbar.make(view, "Hide highlighted AP and circle", Snackbar.LENGTH_SHORT).show();
         }

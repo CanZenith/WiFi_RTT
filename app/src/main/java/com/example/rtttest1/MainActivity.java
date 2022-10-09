@@ -8,20 +8,29 @@ import android.content.IntentFilter;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
+
+import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.snackbar.Snackbar;
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.RecyclerView.LayoutManager;
 import android.util.Log;
+import android.view.Gravity;
+import android.view.MenuItem;
 import android.view.View;
 import android.content.pm.PackageManager;
+
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
     private static final String TAG = "MainActivity";
     private boolean LocationPermission = false;
@@ -32,6 +41,10 @@ public class MainActivity extends AppCompatActivity {
     private WifiScanReceiver myWifiReceiver;
     private MainActivityAdapter mainActivityAdapter;
 
+    DrawerLayout drawerLayout;
+    NavigationView navigationView;
+    Toolbar toolbar;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -39,6 +52,20 @@ public class MainActivity extends AppCompatActivity {
 
         RecyclerView myRecyclerView = findViewById(R.id.RecyclerViewAPs);
         myRecyclerView.setHasFixedSize(true);
+
+        drawerLayout = findViewById(R.id.activity_main);
+        navigationView = findViewById(R.id.nav_view);
+        toolbar = findViewById(R.id.toolbar);
+
+        setSupportActionBar(toolbar);
+        navigationView.setItemIconTintList(null);
+        navigationView.bringToFront();
+        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this,
+                drawerLayout,toolbar,R.string.NavigationDrawerOpen,R.string.NavigationDrawerClose);
+        drawerLayout.addDrawerListener(toggle);
+        toggle.syncState();
+
+        navigationView.setNavigationItemSelectedListener(this);
 
         LayoutManager layoutManager = new LinearLayoutManager(this);
         myRecyclerView.setLayoutManager((layoutManager));
@@ -50,6 +77,11 @@ public class MainActivity extends AppCompatActivity {
 
         myWifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
         myWifiReceiver = new WifiScanReceiver();
+    }
+
+    @Override
+    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+        return true;
     }
 
     //TODO make this class a common service
@@ -142,6 +174,16 @@ public class MainActivity extends AppCompatActivity {
                 LocalisationActivity_mechanical.class);
         intentPositioning.putParcelableArrayListExtra("SCAN_RESULT",AP_list_support_RTT);
         startActivity(intentPositioning);
+    }
+
+    @Override
+    public void onBackPressed() {
+        if(drawerLayout.isDrawerOpen(GravityCompat.START)){
+            drawerLayout.closeDrawer(GravityCompat.START);
+        }
+        else {
+            super.onBackPressed();
+        }
     }
 
     @Override
