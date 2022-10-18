@@ -6,6 +6,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -36,6 +37,7 @@ import com.google.android.material.snackbar.Snackbar;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -415,27 +417,38 @@ public class RangingActivity extends AppCompatActivity implements SensorEventLis
 
         public void onClickLogDataCsv (View view){
             try {
+                // Get csv file name from SharedPreferences
+                SharedPreferences sharedPreferences = getSharedPreferences("config",Context.MODE_PRIVATE);
+                String csvName = sharedPreferences.getString("csvFile","NULL");
+                Log.d("csv",csvName);
+
+                if (csvName.equals("NULL")){
+                    csvName = "ranging_data";
+                }
+
+                // Get current time of the system
+                Long currentTime = System.currentTimeMillis();
+                String time = new SimpleDateFormat("yyyyMMdd_HHmmss",Locale.ENGLISH).format(currentTime);
+                Log.d("csv",time);
+
                 // save csv file externally:/storage/emulate/0/Download/
                 String folderPath = getExternalStorageDirectory().getAbsolutePath() + "/Download/";
-                File file = new File(folderPath + "ranging_data.csv");
-                FileOutputStream outLocal = new FileOutputStream(file);
+                File file = new File(folderPath + csvName + "_" + time + ".csv");
+                FileOutputStream out = new FileOutputStream(file);
 
-                // save csv file internally
-//                FileOutputStream out = openFileOutput("ranging_data.csv", Context.MODE_PRIVATE);
                 for (String[] dataLine : dataLines) {
                     String s = convertToCSV(dataLine);
                     byte[] bytes = s.getBytes();
-//                    out.write(bytes);
-                    outLocal.write(bytes);
+                    out.write(bytes);
                 }
-//                out.close();
-                outLocal.close();
+                out.close();
 
                 // export csv file
                 Context context = getApplicationContext();
-                // File fileLocation = new File(getFilesDir(), "ranging_data.csv");
-                File fileLocation = new File(getExternalStorageDirectory() + "/Download", "ranging_data.csv");
-                Uri path = FileProvider.getUriForFile(context, "com.example.exportcsv.fileprovider", fileLocation);
+                File fileLocation = new File(getExternalStorageDirectory() + "/Download",
+                        csvName + "_" + time + ".csv");
+                Uri path = FileProvider.getUriForFile(context,
+                        "com.example.exportcsv.fileprovider", fileLocation);
                 Intent fileIntent = new Intent(Intent.ACTION_SEND);
                 fileIntent.setType("text/csv");
                 fileIntent.putExtra(Intent.EXTRA_SUBJECT, "Data");
@@ -445,8 +458,9 @@ public class RangingActivity extends AppCompatActivity implements SensorEventLis
 
                 // clear the array for next measurement
                 dataLines = new ArrayList<>();
-                dataLines.add(new String[]{"Number","RTT_TIMESTAMP", "RTT_RESULT", "IMU_TIMESTAMP", "Accx", "Accy", "Accz",
-                        "Gyrox", "Gyroy", "Gyroz", "Magx", "Magy", "Magz", "Azimuth", "Pitch", "Roll", "Points", "\n"});
+                dataLines.add(new String[]{"Number","RTT_TIMESTAMP", "RTT_RESULT", "IMU_TIMESTAMP",
+                        "Accx", "Accy", "Accz", "Gyrox", "Gyroy", "Gyroz", "Magx", "Magy", "Magz",
+                        "Azimuth", "Pitch", "Roll", "Points", "\n"});
             } catch (Exception e) {
                 e.printStackTrace();
             }

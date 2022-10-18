@@ -2,16 +2,16 @@
     <string name="app_name">WiFi-RTT</string>
 
     <!-- MainActivity -->
-    <string name="ScanAPS">Scan</string>
-    <string name="CheckRTTAvailability">Check RTT Availability</string>
+    <string name="ScanAPS">Scan AP</string>
     <string name="ScanResultHint">Scan result will be displayed here.</string>
+    <string name="ServerAddressPreset">192.168.86.</string>
     <string name="Ranging">Ranging</string>
     <string name="SSIDHeader">SSID</string>
     <string name="BSSIDHeader">BSSID</string>
-    <string name="StartPositioningButton">Start Positioning Office</string>
-    <string name="StartPositioningMechanical">Start Positioning Mechanical</string>
+    <string name="Localisation">Positioning</string>
     <string name="NavigationDrawerOpen">Open Navigation Drawer</string>
     <string name="NavigationDrawerClose">Close Navigation Drawer</string>
+    <string name="NavigationDrawerTitle">WiFi RTT Localisation Tool</string>
 
     <!-- LocationPermissionRequest -->
     <string name="ActivityPermissionRequestLabel">Location permission request</string>
@@ -49,13 +49,84 @@
     <string name="ActivityLocalisationLabel">Localisation based on floor plan</string>
     <string name="StartUpdatingLocationButton">Start</string>
     <string name="ChangeVisualisationButton">None</string>
-
-    <!-- activity_localization.xml -->
     <string name="FloorPlanContentDescription">Floor plan for localization</string>
     <string name="LocationPinContentDescription">Pin of current location</string>
     <string name="APContentDescription">Pin of active AP</string>
     <string name="TrilaterationCircle">Circle used to trilateration</string>
     <string name="StartLoggingButtonPressed">Start logging</string>
     <string name="StopLoggingButtonPressed">Stop logging</string>
+
+    <!-- NavigationView -->
+    <string name="NavHome">Home</string>
+    <string name="NavServer">Server Address</string>
+    <string name="NavCSV">CSV File Name</string>
+    <string name="NavRTT">RTT Availability</string>
+    <string name="NavAP">AP Location</string>
+    <string name="NavVersion">Version</string>
+    <string name="NavHelp">Help</string>
+
+    <!-- VersionActivity -->
+    <string name="VersionToolbar">Version of this App</string>
+    <string name="APPLogo">APP logo</string>
+    <string name="CurrentVersion">Current Version: v3.0</string>
+    <string name="ChangelogTitle">Changelog:</string>
+    <!-- Changelog -->
+    <string name="ChangelogBody">
+        <b><big>WiFi-RTT v3.0 (2022.10.18)</big></b>\n
+        - Completed functional navigation menu\n
+        - Server address now can be stored in internal storage, you won\'t need to type it everytime\n
+        - CSV file name now can be changed, and the export time will be added to file name as suffix\n
+        - The current version and full changelog is now available to read in APP\n
+        - Fixed the issue that icons have offset during localization\n
+        - Positioning of different location is now integrated into ONE button\n
+        - Some small UI improvements\n
+        \n
+        <b><big>WiFi-RTT v2.4 (2022.10.09)</big></b>\n
+        - Added feature to have a navigation menu in main activity (it is a preliminary design, which means it doesn\'t work for now)\n
+        - Landscape layout and immersive sticky mode of localization activity\n
+        - Brand new coordinate system for localization, it now works for all devices (different resolution)\n
+        \n
+        <b><big>WiFi-RTT v2.3.1 (2022.09.21)</big></b>\n
+        - Added button to control trilateration visualisation\n
+        - Fixed circles don\'t show properly (center and radius)\n
+        - It now use xml resource to draw circle instead of canvas\n
+        \n
+        <b><big>WiFi-RTT v2.3 (2022.08.18)</big></b>\n
+        - Added feature to visualise trilateration during localization\n
+        \n
+        <b><big>WiFi-RTT v2.2.2 (2022.07.13)</big></b>\n
+        - Fixed csv file format problem\n
+        - Export csv in external storage instead of internal storage\n
+        \n
+        <b><big>WiFi-RTT v2.2.1 (2022.07.09)</big></b>\n
+        - Fixed csv export bug\n
+        \n
+        <b><big>WiFi-RTT v2.2 (2022.07.07)</big></b>\n
+        - Added feature to export ranging data with csv file\n
+        \n
+        <b><big>WiFi-RTT v2.1 (2021.06.29)</big></b>\n
+        - Localization in mechanical building\n
+        \n
+        <b><big>WiFi-RTT v2.0 (2021.06.23)</big></b>\n
+        - Localization in link building\n
+        - Collect RTT only\n
+        \n
+        <b><big>WiFi-RTT v1.0 (2022.02.02)</big></b>\n
+        - Complete version for RTT and IMU data collection in real-time\n
+        - Check RTT availability\n
+        - Location permission request\n
+        \n
+        <b><big>WiFi-RTT v0.1 (2021.12.03)</big></b>\n
+        - Initial commit\n
+        \n
+    </string>
+
+    <!-- HelpActivity -->
+    <string name="HelpToolbar">Help</string>
+    <string name="HelpTitle">About how to use this App</string>
+
+    <!-- APLocationActivity -->
+    <string name="APLocationToolbar">AP Location Setting</string>
+    <string name="LocationTitle">Choose a location</string>
 
 </resources>

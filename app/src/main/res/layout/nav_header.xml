@@ -15,7 +15,8 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="WiFi RTT Localisation Tool"
+        android:text="@string/NavigationDrawerTitle"
+        android:textStyle="bold"
         android:paddingTop="5dp"
         android:layout_marginBottom="-4dp"
         android:textSize="16sp"/>

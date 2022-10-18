@@ -25,48 +25,35 @@
 
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
-            android:layout_height="?attr/actionBarSize"
             android:layout_width="match_parent"
+            android:layout_height="wrap_content"
             app:title="@string/app_name"
+            android:minHeight="?attr/actionBarSize"
             android:background="?attr/colorPrimary"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintBottom_toTopOf="@id/textViewSSID" />
 
-        <Button
-            android:id="@+id/btn1CheckRTT"
+        <TextView
+            android:id="@+id/textViewSSID"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="48dp"
-            android:onClick="onClickCheckRTTAvailability"
-            android:textAllCaps="false"
-            android:text="@string/CheckRTTAvailability"
-            app:layout_constraintBottom_toBottomOf="parent"
+            android:layout_marginStart="50dp"
+            android:layout_marginTop="30dp"
+            android:text="@string/SSIDHeader"
+            android:textSize="34sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/toolbar" />
+
+        <TextView
+            android:id="@+id/textViewBSSID"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="30dp"
+            android:layout_marginEnd="50dp"
+            android:text="@string/BSSIDHeader"
+            android:textSize="34sp"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent" />
-
-        <Button
-            android:id="@+id/btn2ScanAPs"
-            android:layout_width="110dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="64dp"
-            android:layout_marginBottom="8dp"
-            android:onClick="onClickScanAPs"
-            android:textAllCaps="false"
-            android:text="@string/ScanAPS"
-            app:layout_constraintBottom_toTopOf="@+id/btn4StartPositioning"
-            app:layout_constraintStart_toStartOf="parent" />
-
-        <Button
-            android:id="@+id/btn3Ranging"
-            android:layout_width="110dp"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="64dp"
-            android:layout_marginBottom="8dp"
-            android:onClick="onClickRangingAPs"
-            android:textAllCaps="false"
-            android:text="@string/Ranging"
-            app:layout_constraintBottom_toTopOf="@+id/btn4StartPositioning"
-            app:layout_constraintEnd_toEndOf="parent" />
+            app:layout_constraintTop_toBottomOf="@id/toolbar" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/RecyclerViewAPs"
@@ -77,51 +64,71 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/textViewSSID" />
 
-        <TextView
-            android:id="@+id/textViewSSID"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="50dp"
-            android:layout_marginTop="16dp"
-            android:text="@string/SSIDHeader"
-            android:textSize="34sp"
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardBtnScanAPs"
+            android:layout_width="200dp"
+            android:layout_height="50dp"
+            android:layout_marginBottom="30dp"
+            app:layout_constraintBottom_toTopOf="@+id/cardBtnRanging"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/toolbar" />
-
-        <TextView
-            android:id="@+id/textViewBSSID"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:layout_marginEnd="50dp"
-            android:text="@string/BSSIDHeader"
-            android:textSize="34sp"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/toolbar" />
+            app:cardCornerRadius="20dp">
 
-        <Button
-            android:id="@+id/btn4StartPositioning"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:onClick="onClickStartPositioning"
-            android:textAllCaps="false"
-            android:text="@string/StartPositioningButton"
-            app:layout_constraintBottom_toTopOf="@+id/startPositioningMechanical"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent" />
+            <Button
+                android:id="@+id/btn2ScanAPs"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:onClick="onClickScanAPs"
+                android:textAllCaps="false"
+                android:text="@string/ScanAPS"
+                android:textSize="18sp"
+                android:background="?attr/colorPrimary" />
 
-        <Button
-            android:id="@+id/startPositioningMechanical"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:onClick="onClickStartPositioningMechanical"
-            android:textAllCaps="false"
-            android:text="@string/StartPositioningMechanical"
-            app:layout_constraintBottom_toTopOf="@+id/btn1CheckRTT"
+        </androidx.cardview.widget.CardView>
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardBtnRanging"
+            android:layout_width="200dp"
+            android:layout_height="50dp"
+            android:layout_marginBottom="30dp"
+            app:layout_constraintBottom_toTopOf="@+id/cardBtnPositioning"
+            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent" />
+            app:cardCornerRadius="20dp">
+
+            <Button
+                android:id="@+id/btn3Ranging"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:onClick="onClickRangingAPs"
+                android:textAllCaps="false"
+                android:text="@string/Ranging"
+                android:textSize="18sp"
+                android:background="?attr/colorPrimary" />
+
+        </androidx.cardview.widget.CardView>
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardBtnPositioning"
+            android:layout_width="200dp"
+            android:layout_height="50dp"
+            android:layout_marginBottom="70dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:cardCornerRadius="20dp">
+
+            <Button
+                android:id="@+id/btn4StartPositioning"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:onClick="onClickStartPositioning"
+                android:textAllCaps="false"
+                android:text="@string/Localisation"
+                android:textSize="18sp"
+                android:background="?attr/colorPrimary" />
+
+        </androidx.cardview.widget.CardView>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

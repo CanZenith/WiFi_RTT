@@ -5,32 +5,37 @@
 
         <item
             android:id="@+id/nav_home"
-            android:title="Home"
+            android:title="@string/NavHome"
             android:icon="@drawable/icon_home"/>
 
         <item
             android:id="@+id/nav_server"
-            android:title="Server Address"
+            android:title="@string/NavServer"
             android:icon="@drawable/icon_server"/>
 
         <item
             android:id="@+id/nav_csv"
-            android:title="CSV File Name"
+            android:title="@string/NavCSV"
             android:icon="@drawable/icon_csv"/>
 
         <item
+            android:id="@+id/nav_ap"
+            android:title="@string/NavAP"
+            android:icon="@drawable/icon_ap"/>
+
+        <item
             android:id="@+id/nav_rtt"
-            android:title="RTT Availability"
+            android:title="@string/NavRTT"
             android:icon="@drawable/icon_wifirtt"/>
 
         <item
             android:id="@+id/nav_version"
-            android:title="Version"
+            android:title="@string/NavVersion"
             android:icon="@drawable/icon_version"/>
 
         <item
             android:id="@+id/nav_help"
-            android:title="Help"
+            android:title="@string/NavHelp"
             android:icon="@drawable/icon_help"/>
 
     </group>

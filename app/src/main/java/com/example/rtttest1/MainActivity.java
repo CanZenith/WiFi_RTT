@@ -3,29 +3,39 @@ import android.Manifest.permission;
 import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
+import android.os.Build;
 import android.os.Bundle;
 
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.snackbar.Snackbar;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.view.GravityCompat;
+import androidx.core.view.WindowCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.RecyclerView.LayoutManager;
+
+import android.text.InputType;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.MenuItem;
 import android.view.View;
 import android.content.pm.PackageManager;
+import android.view.Window;
+import android.view.WindowManager;
+import android.widget.EditText;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,14 +51,20 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private WifiScanReceiver myWifiReceiver;
     private MainActivityAdapter mainActivityAdapter;
 
+    private int checkedLocation;
+
     DrawerLayout drawerLayout;
     NavigationView navigationView;
     Toolbar toolbar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+//        Window w = getWindow();
+//        w.setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
 
         RecyclerView myRecyclerView = findViewById(R.id.RecyclerViewAPs);
         myRecyclerView.setHasFixedSize(true);
@@ -66,6 +82,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         toggle.syncState();
 
         navigationView.setNavigationItemSelectedListener(this);
+        navigationView.setCheckedItem(R.id.nav_home);
 
         LayoutManager layoutManager = new LinearLayoutManager(this);
         myRecyclerView.setLayoutManager((layoutManager));
@@ -80,7 +97,40 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
     @Override
-    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+    public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {
+        if (menuItem.getItemId() == R.id.nav_server){
+            DialogServer();
+        }
+        else if (menuItem.getItemId() == R.id.nav_csv){
+            DialogCSV();
+        }
+        else if (menuItem.getItemId() == R.id.nav_ap){
+            Toast.makeText(getApplicationContext(),"AP", Toast.LENGTH_SHORT).show();
+        }
+        else if (menuItem.getItemId() == R.id.nav_rtt){
+            //Check WiFi-RTT availability of the device
+            Log.d(TAG,"Checking RTT Availability...");
+
+            boolean RTT_availability = getPackageManager()
+                    .hasSystemFeature(PackageManager.FEATURE_WIFI_RTT);
+
+            if (RTT_availability) {
+                Toast.makeText(this,"WiFi RTT is supported on this device :)",
+                        Toast.LENGTH_LONG).show();
+            } else {
+                Toast.makeText(this,"WiFi RTT is not supported on this device :(",
+                        Toast.LENGTH_LONG).show();
+            }
+        }
+        else if (menuItem.getItemId() == R.id.nav_version){
+            Intent intentVersion = new Intent(getApplicationContext(), VersionActivity.class);
+            startActivity(intentVersion);
+        }
+        else if (menuItem.getItemId() == R.id.nav_help){
+            Intent intentHelp = new Intent(getApplicationContext(), HelpActivity.class);
+            startActivity(intentHelp);
+        }
+        drawerLayout.closeDrawer(GravityCompat.START);
         return true;
     }
 
@@ -131,22 +181,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
     }
 
-    //Check RTT availability of the device
-    public void onClickCheckRTTAvailability(View view){
-        Log.d(TAG,"Checking RTT Availability...");
-
-        boolean RTT_availability = getPackageManager()
-                .hasSystemFeature(PackageManager.FEATURE_WIFI_RTT);
-
-        if (RTT_availability) {
-            Snackbar.make(view, "RTT supported on this device :)",
-                    Snackbar.LENGTH_LONG).show();
-        } else {
-            Snackbar.make(view, "RTT not supported on this device :(",
-                    Snackbar.LENGTH_LONG).show();
-        }
-    }
-
     //Start ranging in a new screen
     public void onClickRangingAPs(View view) {
         Log.d(TAG,"onClickRangingAPs()");
@@ -159,21 +193,44 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
     public void onClickStartPositioning(View view){
-        Log.d(TAG,"onClickStartPositioning()");
 
-        Intent intentPositioning = new Intent(getApplicationContext(),
-                LocalisationActivity.class);
-        intentPositioning.putParcelableArrayListExtra("SCAN_RESULT",AP_list_support_RTT);
-        startActivity(intentPositioning);
-    }
+        String[] location = {"Link Building (J13)","Mechanical Building (J07)"};
 
-    public void onClickStartPositioningMechanical(View view){
-        Log.d(TAG,"onClickStartPositioningMechanical()");
-
-        Intent intentPositioning = new Intent(getApplicationContext(),
-                LocalisationActivity_mechanical.class);
-        intentPositioning.putParcelableArrayListExtra("SCAN_RESULT",AP_list_support_RTT);
-        startActivity(intentPositioning);
+        AlertDialog.Builder dialog_location = new AlertDialog.Builder(this);
+        dialog_location.setTitle("Choose a location");
+        dialog_location.setSingleChoiceItems(location, checkedLocation, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                checkedLocation = which;
+            }
+        });
+        dialog_location.setPositiveButton("Continue", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                switch (checkedLocation){
+                    case 0:
+                        Intent intentPositioning_0 = new Intent(getApplicationContext(),
+                                LocalisationActivity.class);
+                        intentPositioning_0.putParcelableArrayListExtra("SCAN_RESULT",AP_list_support_RTT);
+                        startActivity(intentPositioning_0);
+                        break;
+                    case 1:
+                        Intent intentPositioning_1 = new Intent(getApplicationContext(),
+                                LocalisationActivity_mechanical.class);
+                        intentPositioning_1.putParcelableArrayListExtra("SCAN_RESULT",AP_list_support_RTT);
+                        startActivity(intentPositioning_1);
+                        break;
+                }
+            }
+        });
+        dialog_location.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        });
+        AlertDialog dialog = dialog_location.create();
+        dialog.show();
     }
 
     @Override
@@ -207,5 +264,87 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         //register a Broadcast receiver to run in the main activity thread
         registerReceiver(
                 myWifiReceiver, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
+    }
+
+    public void DialogServer(){
+        final EditText ServerAddress = new EditText(this);
+        ServerAddress.setMaxLines(1);
+        ServerAddress.setInputType(InputType.TYPE_CLASS_NUMBER);
+        ServerAddress.setHint("IP address of the server");
+        ServerAddress.setText(getString(R.string.ServerAddressPreset));
+
+        AlertDialog.Builder dialogServer = new AlertDialog.Builder(this);
+        dialogServer.setTitle("Enter the server address");
+        dialogServer.setView(ServerAddress);
+        dialogServer.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int i) {
+                if (ServerAddress.getText().toString().isEmpty()) {
+                    dialog.dismiss();
+                    Toast.makeText(getApplicationContext(),"Empty address",Toast.LENGTH_SHORT).show();
+                }
+                else{
+                    String serverAddress = ServerAddress.getText().toString();
+
+                    //Write the server address into internal storage
+                    SharedPreferences sharedPreServer = getSharedPreferences("config",
+                            Context.MODE_PRIVATE);
+                    SharedPreferences.Editor editorServer = sharedPreServer.edit();
+                    editorServer.putString("ServerAddress",serverAddress);
+                    editorServer.apply();
+
+                    Toast.makeText(getApplicationContext(),"Server address: "
+                            + serverAddress + "is applied",Toast.LENGTH_LONG).show();
+                }
+            }
+        });
+        dialogServer.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int i) {
+                dialog.dismiss();
+            }
+        });
+        AlertDialog dialog = dialogServer.create();
+        dialog.show();
+    }
+
+    public void DialogCSV(){
+        final EditText CSVFile = new EditText(this);
+        CSVFile.setHint("The csv file name you want");
+        CSVFile.setMaxLines(1);
+
+        AlertDialog.Builder dialogCSV = new AlertDialog.Builder(this);
+        dialogCSV.setTitle("Enter the csv file name");
+        dialogCSV.setView(CSVFile);
+        dialogCSV.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int i) {
+                if (CSVFile.getText().toString().isEmpty()) {
+                    dialog.dismiss();
+                    Toast.makeText(getApplicationContext(),"Empty name",Toast.LENGTH_SHORT).show();
+                }
+                else{
+                    String csvFile = CSVFile.getText().toString();
+
+                    //Write the csv file name into internal storage
+                    SharedPreferences sharedPreCSV = getSharedPreferences("config",
+                            Context.MODE_PRIVATE);
+                    SharedPreferences.Editor editorServer = sharedPreCSV.edit();
+                    editorServer.putString("csvFile",csvFile);
+                    editorServer.apply();
+
+                    Toast.makeText(getApplicationContext(),"The csv file name: "
+                            + csvFile + "is applied",Toast.LENGTH_LONG).show();
+                }
+            }
+        });
+        dialogCSV.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int i) {
+                dialog.dismiss();
+            }
+        });
+        AlertDialog dialog = dialogCSV.create();
+        dialog.show();
     }
 }

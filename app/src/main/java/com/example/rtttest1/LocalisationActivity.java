@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -37,6 +38,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -48,6 +50,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.FormBody;
@@ -82,8 +85,9 @@ public class LocalisationActivity extends AppCompatActivity implements SensorEve
 
     private int buttonState = 0;
     private Button visualiseButton;
+    private EditText url_text;
 
-    private float meter2pixel;
+    private float meter2pixel, dip2pixel;
     private int screenHeight, screenWidth, bitmapHeight, bitmapWidth, Bias_Y;
 
     /**
@@ -113,7 +117,7 @@ public class LocalisationActivity extends AppCompatActivity implements SensorEve
     private Path path;
     private Bitmap temp_bitmap;
     private Canvas temp_canvas;
-    
+
     private ImageView floor_plan, location_pin, AP1_ImageView, AP2_ImageView, AP3_ImageView,
             AP4_ImageView, AP5_ImageView, AP6_ImageView, AP7_ImageView, AP8_ImageView;
     private final ImageView[] Circles = new ImageView[3];
@@ -130,22 +134,22 @@ public class LocalisationActivity extends AppCompatActivity implements SensorEve
     private String[] Calculated_coordinates = new String[8];
     private String[] Previous_location_for_line_drawing = new String[8];
 
-    private final AccessPoint AP1 = new AccessPoint("b0:e4:d5:39:26:89",35.45,14.07);
-    private final AccessPoint AP2 = new AccessPoint("cc:f4:11:8b:29:4d",49,15.11);
-    private final AccessPoint AP3 = new AccessPoint("b0:e4:d5:01:26:f5",27.69,14.72);
-    private final AccessPoint AP4 = new AccessPoint("b0:e4:d5:91:ba:5d",15.68,13.17);
-    private final AccessPoint AP5 = new AccessPoint("b0:e4:d5:96:3b:95",12.08,5.6);
-    private final AccessPoint AP6 = new AccessPoint("f8:1a:2b:06:3c:0b",29.1,5.6);
-    private final AccessPoint AP7 = new AccessPoint("14:22:3b:2a:86:f5",39.31,5.6);
-    private final AccessPoint AP8 = new AccessPoint("14:22:3b:16:5a:bd",50.43,5.6);
+    private final AccessPoint AP1 = new AccessPoint("b0:e4:d5:39:26:89", 35.45, 14.07);
+    private final AccessPoint AP2 = new AccessPoint("cc:f4:11:8b:29:4d", 49, 15.11);
+    private final AccessPoint AP3 = new AccessPoint("b0:e4:d5:01:26:f5", 27.69, 14.72);
+    private final AccessPoint AP4 = new AccessPoint("b0:e4:d5:91:ba:5d", 15.68, 13.17);
+    private final AccessPoint AP5 = new AccessPoint("b0:e4:d5:96:3b:95", 12.08, 5.6);
+    private final AccessPoint AP6 = new AccessPoint("f8:1a:2b:06:3c:0b", 29.1, 5.6);
+    private final AccessPoint AP7 = new AccessPoint("14:22:3b:2a:86:f5", 39.31, 5.6);
+    private final AccessPoint AP8 = new AccessPoint("14:22:3b:16:5a:bd", 50.43, 5.6);
 
     //flag for leaving the activity
     private Boolean Running = true;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState){
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.d(TAG,"onCreate() LocalizationActivity");
+        Log.d(TAG, "onCreate() LocalizationActivity");
 
         //receive RTT_APs from main activity
         Intent intent = getIntent();
@@ -165,13 +169,23 @@ public class LocalisationActivity extends AppCompatActivity implements SensorEve
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
             getWindow().getDecorView().setSystemUiVisibility(
                     View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY |
-                    View.SYSTEM_UI_FLAG_FULLSCREEN |
-                    View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
-                    View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN |
-                    View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION |
-                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
+                            View.SYSTEM_UI_FLAG_FULLSCREEN |
+                            View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
+                            View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN |
+                            View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION |
+                            View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
 
             visualiseButton = findViewById(R.id.btnVisualise);
+            url_text = findViewById(R.id.editText_server);
+
+            //Server address preset
+            SharedPreferences sharedPreferences = getSharedPreferences("config", Context.MODE_PRIVATE);
+            String serverAddress = sharedPreferences.getString("ServerAddress", "NULL");
+            if (serverAddress.equals("NULL")) {
+                url_text.setText(getString(R.string.ServerAddressPreset));
+            } else {
+                url_text.setText(serverAddress);
+            }
 
             //RTT Initiation
             myWifiRTTManager = (WifiRttManager) getSystemService(Context.WIFI_RTT_RANGING_SERVICE);
@@ -182,7 +196,7 @@ public class LocalisationActivity extends AppCompatActivity implements SensorEve
             registerReceiver(myWifiScanReceiver,
                     new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
 
-            for (ScanResult AP:RTT_APs){
+            for (ScanResult AP : RTT_APs) {
                 APs_MacAddress.add(AP.BSSID);
             }
 
@@ -216,24 +230,25 @@ public class LocalisationActivity extends AppCompatActivity implements SensorEve
             display.getRealSize(point);
             screenWidth = point.x;
             screenHeight = point.y;
-            Log.d("window","屏幕宽度："+screenWidth);
-            Log.d("window","屏幕高度："+screenHeight);
+            Log.d("window", "屏幕宽度：" + screenWidth);
+            Log.d("window", "屏幕高度：" + screenHeight);
 
-            meter2pixel = screenWidth/75.01f;
-            Bias_Y = Math.round((screenHeight - screenWidth/3.6f)/2);
+            dip2pixel = this.getResources().getDisplayMetrics().density;
+            meter2pixel = screenWidth / 75.01f;
+            Bias_Y = Math.round((screenHeight - screenWidth / 3.6f) / 2);
 
             Bitmap bitmap_floor_plan = BitmapFactory.decodeResource(getResources(),
                     R.drawable.floor_plan_landscape);
             temp_bitmap = Bitmap.createBitmap(bitmap_floor_plan.getWidth(),
-                    bitmap_floor_plan.getHeight(),Bitmap.Config.RGB_565);
+                    bitmap_floor_plan.getHeight(), Bitmap.Config.RGB_565);
 
             bitmapWidth = bitmap_floor_plan.getWidth();
             bitmapHeight = bitmap_floor_plan.getHeight();
-            Log.d("window","Bitmap宽度："+bitmapWidth);
-            Log.d("window","Bitmap高度："+bitmapHeight);
+            Log.d("window", "Bitmap宽度：" + bitmapWidth);
+            Log.d("window", "Bitmap高度：" + bitmapHeight);
 
             temp_canvas = new Canvas(temp_bitmap);
-            temp_canvas.drawBitmap(bitmap_floor_plan,0,0,null);
+            temp_canvas.drawBitmap(bitmap_floor_plan, 0, 0, null);
 
             paint = new Paint();
             path = new Path();
@@ -242,7 +257,7 @@ public class LocalisationActivity extends AppCompatActivity implements SensorEve
             paint.setColor(Color.RED);
             paint.setStyle(Paint.Style.STROKE);
             paint.setStrokeWidth(10);
-            paint.setPathEffect(new DashPathEffect(new float[] {20,10,10,10},1));
+            paint.setPathEffect(new DashPathEffect(new float[]{20, 10, 10, 10}, 1));
 
             //Start Localisation
             setup_pin_location();
@@ -278,20 +293,6 @@ public class LocalisationActivity extends AppCompatActivity implements SensorEve
 
  */
 
-    /** To calculate coordinates (deprecated)
-     * top left corner of the screen = setX/Y(0,0) = Pin location(55,136)
-     * top left corner of the floor plan (240,136)
-     * SetY(-26) > left edge of the floor plan
-     * width of floor plan (599), height of floor plan (2160)
-     * width of bitmap (1788), height of bitmap (6438)
-     *
-     * FOR PIN LOCATION:
-     * setX = y*<meter2pixel>+<screen_offsetX>*591/650, setY = x*<meter2pixel>*2151/2341
-     *
-     * FOR PATH EFFECT:
-     * path.moveTo/lineTo( (y*32.533*bitmap2floorplan / Pin_y*bitmap2floorplan), ((x*32.533+26)*bitmap2floorplan) )
-     */
-
     /** ============================================================================================
      * -----新坐标系统-----
      * 横屏模式下，坐标原点为手机右上角，垂直方向为x轴，水平方向为y轴
@@ -310,57 +311,52 @@ public class LocalisationActivity extends AppCompatActivity implements SensorEve
      * =============================================================================================
      */
 
-    private float coordinate_X_to_Pixel(double X){
-        return (float) (X*meter2pixel);
+    private float coordinate_X_to_Pixel(double X) {
+        return (float) (X * meter2pixel);
     }
 
-    private float coordinate_Y_to_Pixel(double Y){
+    private float coordinate_Y_to_Pixel(double Y) {
         return (float) (screenHeight - (Y * meter2pixel + Bias_Y));
     }
 
-    private float coordinate_X_to_bitmap(double X){
-        return (float) (X*bitmapWidth/75.01);
+    private float coordinate_X_to_bitmap(double X) {
+        return (float) (X * bitmapWidth / 75.01);
     }
 
-    private float coordinate_Y_to_bitmap(double Y){
-        return (float) (bitmapHeight - (Y*bitmapHeight/20.79));
+    private float coordinate_Y_to_bitmap(double Y) {
+        return (float) (bitmapHeight - (Y * bitmapHeight / 20.79));
     }
 
-    private void setup_pin_location(){
-        AP1_ImageView.setX(coordinate_X_to_Pixel(AP1.getX()));
-        AP1_ImageView.setY(coordinate_Y_to_Pixel(AP1.getY()));
-        AP2_ImageView.setX(coordinate_X_to_Pixel(AP2.getX()));
-        AP2_ImageView.setY(coordinate_Y_to_Pixel(AP2.getY()));
-        AP3_ImageView.setX(coordinate_X_to_Pixel(AP3.getX()));
-        AP3_ImageView.setY(coordinate_Y_to_Pixel(AP3.getY()));
-        AP4_ImageView.setX(coordinate_X_to_Pixel(AP4.getX()));
-        AP4_ImageView.setY(coordinate_Y_to_Pixel(AP4.getY()));
-        AP5_ImageView.setX(coordinate_X_to_Pixel(AP5.getX()));
-        AP5_ImageView.setY(coordinate_Y_to_Pixel(AP5.getY()));
-        AP6_ImageView.setX(coordinate_X_to_Pixel(AP6.getX()));
-        AP6_ImageView.setY(coordinate_Y_to_Pixel(AP6.getY()));
-        AP7_ImageView.setX(coordinate_X_to_Pixel(AP7.getX()));
-        AP7_ImageView.setY(coordinate_Y_to_Pixel(AP7.getY()));
-        AP8_ImageView.setX(coordinate_X_to_Pixel(AP8.getX()));
-        AP8_ImageView.setY(coordinate_Y_to_Pixel(AP8.getY()));
+    private void setup_pin_location() {
+        AP1_ImageView.setX(coordinate_X_to_Pixel(AP1.getX()) - (10 * dip2pixel + 0.5f));
+        AP1_ImageView.setY(coordinate_Y_to_Pixel(AP1.getY()) - (20 * dip2pixel + 0.5f));
+        AP2_ImageView.setX(coordinate_X_to_Pixel(AP2.getX()) - (10 * dip2pixel + 0.5f));
+        AP2_ImageView.setY(coordinate_Y_to_Pixel(AP2.getY()) - (20 * dip2pixel + 0.5f));
+        AP3_ImageView.setX(coordinate_X_to_Pixel(AP3.getX()) - (10 * dip2pixel + 0.5f));
+        AP3_ImageView.setY(coordinate_Y_to_Pixel(AP3.getY()) - (20 * dip2pixel + 0.5f));
+        AP4_ImageView.setX(coordinate_X_to_Pixel(AP4.getX()) - (10 * dip2pixel + 0.5f));
+        AP4_ImageView.setY(coordinate_Y_to_Pixel(AP4.getY()) - (20 * dip2pixel + 0.5f));
+        AP5_ImageView.setX(coordinate_X_to_Pixel(AP5.getX()) - (10 * dip2pixel + 0.5f));
+        AP5_ImageView.setY(coordinate_Y_to_Pixel(AP5.getY()) - (20 * dip2pixel + 0.5f));
+        AP6_ImageView.setX(coordinate_X_to_Pixel(AP6.getX()) - (10 * dip2pixel + 0.5f));
+        AP6_ImageView.setY(coordinate_Y_to_Pixel(AP6.getY()) - (20 * dip2pixel + 0.5f));
+        AP7_ImageView.setX(coordinate_X_to_Pixel(AP7.getX()) - (10 * dip2pixel + 0.5f));
+        AP7_ImageView.setY(coordinate_Y_to_Pixel(AP7.getY()) - (20 * dip2pixel + 0.5f));
+        AP8_ImageView.setX(coordinate_X_to_Pixel(AP8.getX()) - (10 * dip2pixel + 0.5f));
+        AP8_ImageView.setY(coordinate_Y_to_Pixel(AP8.getY()) - (20 * dip2pixel + 0.5f));
+        // (x * dip2pixel + 0.5f) is the bias of ImageView itself
 
         Circles[0].setAlpha(0.0f);
         Circles[1].setAlpha(0.0f);
         Circles[2].setAlpha(0.0f);
 
-//        Circles[0].setVisibility(View.GONE);
-//        Circles[1].setVisibility(View.GONE);
-//        Circles[2].setVisibility(View.GONE);
-
         //my desk
-//        location_pin.setX(coordinate_X_to_Pixel(42));
-//        location_pin.setY(coordinate_Y_to_Pixel(14.66));
-        location_pin.setX(coordinate_X_to_Pixel(0));
-        location_pin.setY(coordinate_Y_to_Pixel(0));
+        location_pin.setX(coordinate_X_to_Pixel(43.46) - (10 * dip2pixel + 0.5f));
+        location_pin.setY(coordinate_Y_to_Pixel(14.66) - (18 * dip2pixel + 0.5f));
     }
 
     //TODO animated drawable?
-    private void update_location_pin(){
+    private void update_location_pin() {
         //TODO better coordinate system?
         Handler Update_Location_Handler = new Handler();
         Runnable Update_Location_Runnable = new Runnable() {
@@ -368,7 +364,7 @@ public class LocalisationActivity extends AppCompatActivity implements SensorEve
             @Override
             public void run() {
                 if (Running) {
-                    Update_Location_Handler.postDelayed(this,1000);
+                    Update_Location_Handler.postDelayed(this, 1000);
 
                     if (Calculated_coordinates[0] != null && Calculated_coordinates[1] != null) {
                         //TODO try except for wrong format
@@ -376,21 +372,20 @@ public class LocalisationActivity extends AppCompatActivity implements SensorEve
                         if (start_localisation == 0) {
                             Previous_location_for_line_drawing = Calculated_coordinates;
                             LocationX.setText(String.format(Locale.getDefault(),
-                                    "%.2f",Double.valueOf(Calculated_coordinates[0])));
+                                    "%.2f", Double.valueOf(Calculated_coordinates[0])));
                             LocationY.setText(String.format(Locale.getDefault(),
-                                    "%.2f",Double.valueOf(Calculated_coordinates[1])));
+                                    "%.2f", Double.valueOf(Calculated_coordinates[1])));
 
-                            location_pin.setX(coordinate_X_to_Pixel(Double.parseDouble(Calculated_coordinates[0])));
-                            location_pin.setY(coordinate_Y_to_Pixel(Double.parseDouble(Calculated_coordinates[1])));
+                            location_pin.setX(coordinate_X_to_Pixel(Double.parseDouble(Calculated_coordinates[0]))
+                                    - (10 * dip2pixel + 0.5f));
+                            location_pin.setY(coordinate_Y_to_Pixel(Double.parseDouble(Calculated_coordinates[1]))
+                                    - (18 * dip2pixel + 0.5f));
 
-                            Log.d("Location information","Location X: " + Calculated_coordinates[0]
-                                    + "Location Y: " + Calculated_coordinates[1]);
-
-                            if (buttonState == 1||buttonState == 2) {
+                            if (buttonState == 1 || buttonState == 2) {
                                 visualiseTrilateration();
                             }
 
-                            start_localisation ++;
+                            start_localisation++;
 
                         } else {
                             LocationX.setText(String.format(Locale.getDefault(),
@@ -401,8 +396,10 @@ public class LocalisationActivity extends AppCompatActivity implements SensorEve
                             path.moveTo(coordinate_X_to_bitmap(Double.parseDouble(Previous_location_for_line_drawing[0])),
                                     coordinate_Y_to_bitmap(Double.parseDouble(Previous_location_for_line_drawing[1])));
 
-                            location_pin.setX(coordinate_X_to_Pixel(Double.parseDouble(Calculated_coordinates[0])));
-                            location_pin.setY(coordinate_Y_to_Pixel(Double.parseDouble(Calculated_coordinates[1])));
+                            location_pin.setX(coordinate_X_to_Pixel(Double.parseDouble(Calculated_coordinates[0]))
+                                    - (10 * dip2pixel + 0.5f));
+                            location_pin.setY(coordinate_Y_to_Pixel(Double.parseDouble(Calculated_coordinates[1]))
+                                    - (18 * dip2pixel + 0.5f));
 
                             path.lineTo(coordinate_X_to_bitmap(Double.parseDouble(Calculated_coordinates[0])),
                                     coordinate_Y_to_bitmap(Double.parseDouble(Calculated_coordinates[1])));
@@ -411,7 +408,7 @@ public class LocalisationActivity extends AppCompatActivity implements SensorEve
 
                             Previous_location_for_line_drawing = Calculated_coordinates;
 
-                            if (buttonState == 1||buttonState == 2) {
+                            if (buttonState == 1 || buttonState == 2) {
                                 visualiseTrilateration();
                             }
                         }
@@ -421,7 +418,7 @@ public class LocalisationActivity extends AppCompatActivity implements SensorEve
                 }
             }
         };
-        Update_Location_Handler.postDelayed(Update_Location_Runnable,1000);
+        Update_Location_Handler.postDelayed(Update_Location_Runnable, 1000);
     }
 
     private void visualiseTrilateration() {
@@ -447,8 +444,8 @@ public class LocalisationActivity extends AppCompatActivity implements SensorEve
             float[] Dis_List_float = new float[Dis_List.length];
             int[] Diameter = new int[Dis_List.length];
 
-            Log.d("Location information","Location X/Y: "+Calculated_coordinates[0] + ", "
-                    +Calculated_coordinates[1] + ", AP: " + APList + ", Distance: " + DisList);
+            Log.d("Location information", "Location X/Y: " + Calculated_coordinates[0] + ", "
+                    + Calculated_coordinates[1] + ", AP: " + APList + ", Distance: " + DisList);
 
             //Transfer String[] to int[] and float[], convert distance from meter to pixel
             for (int j = 0; j < AP_List.length; j++) {
@@ -457,99 +454,68 @@ public class LocalisationActivity extends AppCompatActivity implements SensorEve
                 Diameter[j] = Math.round(2 * meter2pixel * Dis_List_float[j]);
             }
 
-            if (buttonState == 1) {
-                //Change AP image color and draw circle
-                for (int i = 0; i < AP_List.length; i++) {
-                    switch (AP_List_int[i]) {
-                        case 1:
-                            AP1_ImageView.setColorFilter(color_green);
-                            break;
-                        case 2:
-                            AP2_ImageView.setColorFilter(color_green);
-                            break;
-                        case 3:
-                            AP3_ImageView.setColorFilter(color_green);
-                            break;
-                        case 4:
-                            AP4_ImageView.setColorFilter(color_green);
-                            break;
-                        case 5:
-                            AP5_ImageView.setColorFilter(color_green);
-                            break;
-                        case 6:
-                            AP6_ImageView.setColorFilter(color_green);
-                            break;
-                        case 7:
-                            AP7_ImageView.setColorFilter(color_green);
-                            break;
-                        case 8:
-                            AP8_ImageView.setColorFilter(color_green);
-                            break;
-                    }
-                }
-            } else if (buttonState == 2) {
-                //Change AP image color and draw circle
-                for (int i = 0; i < AP_List.length; i++) {
-                    switch (AP_List_int[i]) {
-                        case 1:
-                            AP1_ImageView.setColorFilter(color_green);
-                            Circles[i].setLayoutParams(new FrameLayout.LayoutParams(Diameter[i], Diameter[i]));
-                            Circles[i].setAlpha(0.2f);
-                            Circles[i].setX(coordinate_X_to_Pixel(AP1.getX()) - 1f * Diameter[i] / 2 + 24);
-                            Circles[i].setY(coordinate_Y_to_Pixel(AP1.getY()) - 1f * Diameter[i] / 2 + 24);
-                            break;
-                        case 2:
-                            AP2_ImageView.setColorFilter(color_green);
-                            Circles[i].setLayoutParams(new FrameLayout.LayoutParams(Diameter[i], Diameter[i]));
-                            Circles[i].setAlpha(0.2f);
-                            Circles[i].setX(coordinate_X_to_Pixel(AP2.getX()) - 1f * Diameter[i] / 2 + 24);
-                            Circles[i].setY(coordinate_Y_to_Pixel(AP2.getY()) - 1f * Diameter[i] / 2 + 24);
-                            break;
-                        case 3:
-                            AP3_ImageView.setColorFilter(color_green);
-                            Circles[i].setLayoutParams(new FrameLayout.LayoutParams(Diameter[i], Diameter[i]));
-                            Circles[i].setAlpha(0.2f);
-                            Circles[i].setX(coordinate_X_to_Pixel(AP3.getX()) - 1f * Diameter[i] / 2 + 24);
-                            Circles[i].setY(coordinate_Y_to_Pixel(AP3.getY()) - 1f * Diameter[i] / 2 + 24);
-                            break;
-                        case 4:
-                            AP4_ImageView.setColorFilter(color_green);
-                            Circles[i].setLayoutParams(new FrameLayout.LayoutParams(Diameter[i], Diameter[i]));
-                            Circles[i].setAlpha(0.2f);
-                            Circles[i].setX(coordinate_X_to_Pixel(AP4.getX()) - 1f * Diameter[i] / 2 + 24);
-                            Circles[i].setY(coordinate_Y_to_Pixel(AP4.getY()) - 1f * Diameter[i] / 2 + 24);
-                            break;
-                        case 5:
-                            AP5_ImageView.setColorFilter(color_green);
-                            Circles[i].setLayoutParams(new FrameLayout.LayoutParams(Diameter[i], Diameter[i]));
-                            Circles[i].setAlpha(0.2f);
-                            Circles[i].setX(coordinate_X_to_Pixel(AP5.getX()) - 1f * Diameter[i] / 2 + 24);
-                            Circles[i].setY(coordinate_Y_to_Pixel(AP5.getY()) - 1f * Diameter[i] / 2 + 24);
-                            break;
-                        case 6:
-                            AP6_ImageView.setColorFilter(color_green);
-                            Circles[i].setLayoutParams(new FrameLayout.LayoutParams(Diameter[i], Diameter[i]));
-                            Circles[i].setAlpha(0.2f);
-                            Circles[i].setX(coordinate_X_to_Pixel(AP6.getX()) - 1f * Diameter[i] / 2 + 24);
-                            Circles[i].setY(coordinate_Y_to_Pixel(AP6.getY()) - 1f * Diameter[i] / 2 + 24);
-                            break;
-                        case 7:
-                            AP7_ImageView.setColorFilter(color_green);
-                            Circles[i].setLayoutParams(new FrameLayout.LayoutParams(Diameter[i], Diameter[i]));
-                            Circles[i].setAlpha(0.2f);
-                            Circles[i].setX(coordinate_X_to_Pixel(AP7.getX()) - 1f * Diameter[i] / 2 + 24);
-                            Circles[i].setY(coordinate_Y_to_Pixel(AP7.getY()) - 1f * Diameter[i] / 2 + 24);
-                            break;
-                        case 8:
-                            AP8_ImageView.setColorFilter(color_green);
-                            Circles[i].setLayoutParams(new FrameLayout.LayoutParams(Diameter[i], Diameter[i]));
-                            Circles[i].setAlpha(0.2f);
-                            Circles[i].setX(coordinate_X_to_Pixel(AP8.getX()) - 1f * Diameter[i] / 2 + 24);
-                            Circles[i].setY(coordinate_Y_to_Pixel(AP8.getY()) - 1f * Diameter[i] / 2 + 24);
-                            break;
-                    }
+            //Change AP image color and draw circle
+            for (int i = 0; i < AP_List.length; i++) {
+                switch (AP_List_int[i]) {
+                    case 1:
+                        AP1_ImageView.setColorFilter(color_green);
+                        Circles[i].setLayoutParams(new FrameLayout.LayoutParams(Diameter[i], Diameter[i]));
+                        Circles[i].setAlpha(0.2f);
+                        Circles[i].setX(coordinate_X_to_Pixel(AP1.getX()) - 1f * Diameter[i] / 2);
+                        Circles[i].setY(coordinate_Y_to_Pixel(AP1.getY()) - 1f * Diameter[i] / 2 - (10 * dip2pixel + 0.5f));
+                        break;
+                    case 2:
+                        AP2_ImageView.setColorFilter(color_green);
+                        Circles[i].setLayoutParams(new FrameLayout.LayoutParams(Diameter[i], Diameter[i]));
+                        Circles[i].setAlpha(0.2f);
+                        Circles[i].setX(coordinate_X_to_Pixel(AP2.getX()) - 1f * Diameter[i] / 2);
+                        Circles[i].setY(coordinate_Y_to_Pixel(AP2.getY()) - 1f * Diameter[i] / 2 - (10 * dip2pixel + 0.5f));
+                        break;
+                    case 3:
+                        AP3_ImageView.setColorFilter(color_green);
+                        Circles[i].setLayoutParams(new FrameLayout.LayoutParams(Diameter[i], Diameter[i]));
+                        Circles[i].setAlpha(0.2f);
+                        Circles[i].setX(coordinate_X_to_Pixel(AP3.getX()) - 1f * Diameter[i] / 2);
+                        Circles[i].setY(coordinate_Y_to_Pixel(AP3.getY()) - 1f * Diameter[i] / 2 - (10 * dip2pixel + 0.5f));
+                        break;
+                    case 4:
+                        AP4_ImageView.setColorFilter(color_green);
+                        Circles[i].setLayoutParams(new FrameLayout.LayoutParams(Diameter[i], Diameter[i]));
+                        Circles[i].setAlpha(0.2f);
+                        Circles[i].setX(coordinate_X_to_Pixel(AP4.getX()) - 1f * Diameter[i] / 2);
+                        Circles[i].setY(coordinate_Y_to_Pixel(AP4.getY()) - 1f * Diameter[i] / 2 - (10 * dip2pixel + 0.5f));
+                        break;
+                    case 5:
+                        AP5_ImageView.setColorFilter(color_green);
+                        Circles[i].setLayoutParams(new FrameLayout.LayoutParams(Diameter[i], Diameter[i]));
+                        Circles[i].setAlpha(0.2f);
+                        Circles[i].setX(coordinate_X_to_Pixel(AP5.getX()) - 1f * Diameter[i] / 2);
+                        Circles[i].setY(coordinate_Y_to_Pixel(AP5.getY()) - 1f * Diameter[i] / 2 - (10 * dip2pixel + 0.5f));
+                        break;
+                    case 6:
+                        AP6_ImageView.setColorFilter(color_green);
+                        Circles[i].setLayoutParams(new FrameLayout.LayoutParams(Diameter[i], Diameter[i]));
+                        Circles[i].setAlpha(0.2f);
+                        Circles[i].setX(coordinate_X_to_Pixel(AP6.getX()) - 1f * Diameter[i] / 2);
+                        Circles[i].setY(coordinate_Y_to_Pixel(AP6.getY()) - 1f * Diameter[i] / 2 - (10 * dip2pixel + 0.5f));
+                        break;
+                    case 7:
+                        AP7_ImageView.setColorFilter(color_green);
+                        Circles[i].setLayoutParams(new FrameLayout.LayoutParams(Diameter[i], Diameter[i]));
+                        Circles[i].setAlpha(0.2f);
+                        Circles[i].setX(coordinate_X_to_Pixel(AP7.getX()) - 1f * Diameter[i] / 2);
+                        Circles[i].setY(coordinate_Y_to_Pixel(AP7.getY()) - 1f * Diameter[i] / 2 - (10 * dip2pixel + 0.5f));
+                        break;
+                    case 8:
+                        AP8_ImageView.setColorFilter(color_green);
+                        Circles[i].setLayoutParams(new FrameLayout.LayoutParams(Diameter[i], Diameter[i]));
+                        Circles[i].setAlpha(0.2f);
+                        Circles[i].setX(coordinate_X_to_Pixel(AP8.getX()) - 1f * Diameter[i] / 2);
+                        Circles[i].setY(coordinate_Y_to_Pixel(AP8.getY()) - 1f * Diameter[i] / 2 - (10 * dip2pixel + 0.5f));
+                        break;
                 }
             }
+
         }
     }
 
@@ -562,193 +528,158 @@ public class LocalisationActivity extends AppCompatActivity implements SensorEve
                 rangingRequest, getApplication().getMainExecutor(), myRTTRangingResultCallback);
     }
 
-    public void onClickStartLoggingData(View view){
+    public void onClickStartLoggingData(View view) {
         view.setEnabled(false);
-        EditText url_text = findViewById(R.id.editText_server);
         String url_bit = url_text.getText().toString();
-        String url = "http://192.168.86."+url_bit+":5000/server";
-        Log.d(TAG, "Start sending to "+ url);
-        final OkHttpClient client = new OkHttpClient();
+        Log.d("Text", url_bit);
+        if (url_bit.isEmpty()) {
+            Toast.makeText(getApplicationContext(), "Please enter the server address",
+                    Toast.LENGTH_SHORT).show();
+        } else {
+            String url = "http://" + url_bit + ":5000/server";
+            Log.d(TAG, "Start sending to " + url);
+            final OkHttpClient client = new OkHttpClient();
 
-        //TODO use thread
-        Handler LogRTT_Handler = new Handler();
-        Runnable LogRTT_Runnable = new Runnable() {
-            @Override
-            public void run() {
-                if (Running){
-                    LogRTT_Handler.postDelayed(this,200);
-                    List<String> RangingInfo = new ArrayList<>();
-                    for (RangingResult result: Synchronised_RTT){
-                        RangingInfo.add(String.valueOf(result.getMacAddress()));
-                        RangingInfo.add(String.valueOf(result.getDistanceMm()));
-                        RangingInfo.add(String.valueOf(result.getDistanceStdDevMm()));
-                        RangingInfo.add(String.valueOf(result.getRssi()));
+            //TODO use thread
+            Handler LogRTT_Handler = new Handler();
+            Runnable LogRTT_Runnable = new Runnable() {
+                @Override
+                public void run() {
+                    if (Running) {
+                        LogRTT_Handler.postDelayed(this, 200);
+                        List<String> RangingInfo = new ArrayList<>();
+                        for (RangingResult result : Synchronised_RTT) {
+                            RangingInfo.add(String.valueOf(result.getMacAddress()));
+                            RangingInfo.add(String.valueOf(result.getDistanceMm()));
+                            RangingInfo.add(String.valueOf(result.getDistanceStdDevMm()));
+                            RangingInfo.add(String.valueOf(result.getRssi()));
+                        }
+
+                        RequestBody RTT_body = new FormBody.Builder()
+                                .add("RTT_Timestamp", String.valueOf(RTT_timestamp))
+                                .add("RTT_Result", String.valueOf(RangingInfo))
+                                .add("IMU_Timestamp", String.valueOf(Closest_IMU_timestamp))
+                                .add("Accx", String.valueOf(Synchronised_LastAccReading[0]))
+                                .add("Accy", String.valueOf(Synchronised_LastAccReading[1]))
+                                .add("Accz", String.valueOf(Synchronised_LastAccReading[2]))
+                                .add("Gyrox", String.valueOf(Synchronised_LastGyroReading[0]))
+                                .add("Gyroy", String.valueOf(Synchronised_LastGyroReading[1]))
+                                .add("Gyroz", String.valueOf(Synchronised_LastGyroReading[2]))
+                                .add("Magx", String.valueOf(Synchronised_LastMagReading[0]))
+                                .add("Magy", String.valueOf(Synchronised_LastMagReading[1]))
+                                .add("Magz", String.valueOf(Synchronised_LastMagReading[2]))
+                                .add("Azimuth", String.valueOf(Synchronised_orientationAngles[0]))
+                                .add("Pitch", String.valueOf(Synchronised_orientationAngles[1]))
+                                .add("Roll", String.valueOf(Synchronised_orientationAngles[2]))
+                                .build();
+
+                        Request RTT_request = new Request.Builder()
+                                .url(url)
+                                .post(RTT_body)
+                                .build();
+
+                        final Call call = client.newCall(RTT_request);
+                        call.enqueue(new Callback() {
+                            @Override
+                            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                                //Log.i("onFailure",e.getMessage());
+                            }
+
+                            @Override
+                            public void onResponse(@NonNull Call call, @NonNull Response response)
+                                    throws IOException {
+                                Location_from_server = Objects.requireNonNull(response.body()).string();
+                                //Location_from_server = x y [AP1, AP2, AP3] [Distance1, Distance2, Distance3]
+                                Log.d(TAG, "Location_from_server = " + Location_from_server);
+                                response.close();
+                                Calculated_coordinates = Location_from_server.split(" ");
+
+                                APList_start = Location_from_server.indexOf('[');
+                                APList_end = Location_from_server.indexOf(']');
+                                DisList_start = Location_from_server.indexOf('[', APList_end);
+                                DisList_end = Location_from_server.indexOf(']', DisList_start);
+
+                                APList = Location_from_server.substring(APList_start + 1, APList_end);
+                                DisList = Location_from_server.substring(DisList_start + 1, DisList_end);
+                                //Data format: APList = AP1, AP2, AP3 | DisList = Distance1, Distance2, Distance3
+                            }
+                        });
+                    } else {
+                        LogRTT_Handler.removeCallbacks(this);
                     }
+                }
+            };
 
-                    RequestBody RTT_body = new FormBody.Builder()
-                            .add("RTT_Timestamp", String.valueOf(RTT_timestamp))
-                            .add("RTT_Result", String.valueOf(RangingInfo))
-                            .add("IMU_Timestamp",String.valueOf(Closest_IMU_timestamp))
-                            .add("Accx", String.valueOf(Synchronised_LastAccReading[0]))
-                            .add("Accy", String.valueOf(Synchronised_LastAccReading[1]))
-                            .add("Accz", String.valueOf(Synchronised_LastAccReading[2]))
-                            .add("Gyrox", String.valueOf(Synchronised_LastGyroReading[0]))
-                            .add("Gyroy", String.valueOf(Synchronised_LastGyroReading[1]))
-                            .add("Gyroz", String.valueOf(Synchronised_LastGyroReading[2]))
-                            .add("Magx", String.valueOf(Synchronised_LastMagReading[0]))
-                            .add("Magy",String.valueOf(Synchronised_LastMagReading[1]))
-                            .add("Magz",String.valueOf(Synchronised_LastMagReading[2]))
-                            .add("Azimuth",String.valueOf(Synchronised_orientationAngles[0]))
-                            .add("Pitch",String.valueOf(Synchronised_orientationAngles[1]))
-                            .add("Roll",String.valueOf(Synchronised_orientationAngles[2]))
+            Thread IMU_thread = new Thread(() -> {
+                while (Running) {
+                    try {
+                        Thread.sleep(200);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    RequestBody IMU_Body = new FormBody.Builder()
+                            .add("Flag", "IMU")
+                            .add("Timestamp", String.valueOf(SystemClock.elapsedRealtimeNanos()))
+                            .add("Accx", String.valueOf(LastAccReading[0]))
+                            .add("Accy", String.valueOf(LastAccReading[1]))
+                            .add("Accz", String.valueOf(LastAccReading[2]))
+                            .add("Gyrox", String.valueOf(LastGyroReading[0]))
+                            .add("Gyroy", String.valueOf(LastGyroReading[1]))
+                            .add("Gyroz", String.valueOf(LastGyroReading[2]))
+                            .add("Magx", String.valueOf(LastMagReading[0]))
+                            .add("Magy", String.valueOf(LastMagReading[1]))
+                            .add("Magz", String.valueOf(LastMagReading[2]))
+                            .add("Azimuth", String.valueOf(orientationAngles[0]))
+                            .add("Pitch", String.valueOf(orientationAngles[1]))
+                            .add("Roll", String.valueOf(orientationAngles[2]))
                             .build();
 
-                    Request RTT_request = new Request.Builder()
+                    Request IMU_Request = new Request.Builder()
                             .url(url)
-                            .post(RTT_body)
+                            .post(IMU_Body)
                             .build();
 
-                    final Call call = client.newCall(RTT_request);
+                    final Call call = client.newCall(IMU_Request);
                     call.enqueue(new Callback() {
                         @Override
                         public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                            //Log.i("onFailure",e.getMessage());
+                            Log.i("onFailure", e.getMessage());
                         }
 
                         @Override
                         public void onResponse(@NonNull Call call, @NonNull Response response)
                                 throws IOException {
-                            Location_from_server = Objects.requireNonNull(response.body()).string();
-                            //Location_from_server = x y [AP1, AP2, AP3] [Distance1, Distance2, Distance3]
-                            Log.d(TAG,"Location_from_server = " + Location_from_server);
+                            String result = Objects.requireNonNull(response.body()).string();
                             response.close();
-                            Calculated_coordinates = Location_from_server.split(" ");
-
-                            APList_start = Location_from_server.indexOf('[');
-                            APList_end = Location_from_server.indexOf(']');
-                            DisList_start = Location_from_server.indexOf('[',APList_end);
-                            DisList_end = Location_from_server.indexOf(']',DisList_start);
-
-                            APList = Location_from_server.substring(APList_start+1,APList_end);
-                            DisList = Location_from_server.substring(DisList_start+1,DisList_end);
-                            //Log.d("List",APList);
-                            //Log.d("List",DisList);
-                            //Data format: APList = AP1, AP2, AP3 | DisList = Distance1, Distance2, Distance3
+                            Log.i("result", result);
                         }
                     });
-                } else {
-                    LogRTT_Handler.removeCallbacks(this);
                 }
-            }
-        };
 
-        Thread IMU_thread = new Thread(() -> {
-            while (Running) {
-                try {
-                    Thread.sleep(200);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                RequestBody IMU_Body = new FormBody.Builder()
-                        .add("Flag","IMU")
-                        .add("Timestamp", String.valueOf(SystemClock.elapsedRealtimeNanos()))
-                        .add("Accx", String.valueOf(LastAccReading[0]))
-                        .add("Accy", String.valueOf(LastAccReading[1]))
-                        .add("Accz", String.valueOf(LastAccReading[2]))
-                        .add("Gyrox", String.valueOf(LastGyroReading[0]))
-                        .add("Gyroy", String.valueOf(LastGyroReading[1]))
-                        .add("Gyroz", String.valueOf(LastGyroReading[2]))
-                        .add("Magx", String.valueOf(LastMagReading[0]))
-                        .add("Magy",String.valueOf(LastMagReading[1]))
-                        .add("Magz",String.valueOf(LastMagReading[2]))
-                        .add("Azimuth",String.valueOf(orientationAngles[0]))
-                        .add("Pitch",String.valueOf(orientationAngles[1]))
-                        .add("Roll",String.valueOf(orientationAngles[2]))
-                        .build();
-
-                Request IMU_Request = new Request.Builder()
-                        .url(url)
-                        .post(IMU_Body)
-                        .build();
-
-                final Call call = client.newCall(IMU_Request);
-                call.enqueue(new Callback() {
-                    @Override
-                    public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                        Log.i("onFailure",e.getMessage());
-                    }
-
-                    @Override
-                    public void onResponse(@NonNull Call call, @NonNull Response response)
-                            throws IOException {
-                        String result = Objects.requireNonNull(response.body()).string();
-                        response.close();
-                        Log.i("result",result);
-                    }
-                });
-            }
-        });
-        //IMU_thread.start();
-        //wait x ms (only once) before running
-        LogRTT_Handler.postDelayed(LogRTT_Runnable,1000);
+            });
+            //IMU_thread.start();
+            //wait x ms (only once) before running
+            LogRTT_Handler.postDelayed(LogRTT_Runnable, 1000);
+        }
     }
 
-    public void onClickChangeVisualisation(View view){
-
-        //int[] r = {200,300,400,500,600,700};
-
+    public void onClickChangeVisualisation(View view) {
         if (buttonState == 0) {
             visualiseButton.setText("APs");
             buttonState = 1;
 
-            Circles[0].setAlpha(0.0f);
-            Circles[1].setAlpha(0.0f);
-            Circles[2].setAlpha(0.0f);
-
-            /*Circle1_ImageView.setLayoutParams(new FrameLayout.LayoutParams(r[0],r[0]));
-            Circle2_ImageView.setLayoutParams(new FrameLayout.LayoutParams(r[1],r[1]));
-            Circle3_ImageView.setLayoutParams(new FrameLayout.LayoutParams(r[2],r[2]));
-            Circle1_ImageView.setAlpha(0.2f);
-            Circle2_ImageView.setAlpha(0.2f);
-            Circle3_ImageView.setAlpha(0.2f);
-            Circle1_ImageView.setX(coordinate_X_to_Pixel(AP4.getX())-r[0]/2+24);
-            Circle1_ImageView.setY(coordinate_Y_to_Pixel(AP4.getY())-r[0]/2+24);
-            Circle2_ImageView.setX(coordinate_X_to_Pixel(AP5.getX())-r[1]/2+24);
-            Circle2_ImageView.setY(coordinate_Y_to_Pixel(AP5.getY())-r[1]/2+24);
-            Circle3_ImageView.setX(coordinate_X_to_Pixel(AP6.getX())-r[2]/2+24);
-            Circle3_ImageView.setY(coordinate_Y_to_Pixel(AP6.getY())-r[2]/2+24);*/
-
-            path.moveTo(coordinate_X_to_bitmap(0), coordinate_Y_to_bitmap(0));
-            path.lineTo(coordinate_X_to_bitmap(0), coordinate_Y_to_bitmap(0));
-
-            temp_canvas.drawPath(path, paint);
-            floor_plan.setImageBitmap(temp_bitmap);
-
-            Snackbar.make(view, "Highlight APs being used for trilateration", Snackbar.LENGTH_SHORT).show();
+            Snackbar.make(view, "Mode APs: Highlight APs being used for trilateration",
+                    Snackbar.LENGTH_SHORT).show();
         } else if (buttonState == 1) {
             visualiseButton.setText("All");
             buttonState = 2;
 
-//            Circle1_ImageView.setLayoutParams(new FrameLayout.LayoutParams(r[3],r[3]));
-//            Circle2_ImageView.setLayoutParams(new FrameLayout.LayoutParams(r[4],r[4]));
-//            Circle3_ImageView.setLayoutParams(new FrameLayout.LayoutParams(r[5],r[5]));
-//            Circles[0].setAlpha(0.2f);
-//            Circles[1].setAlpha(0.2f);
-//            Circles[2].setAlpha(0.2f);
-//            Circle1_ImageView.setX(coordinate_X_to_Pixel(AP1.getX())-r[3]/2+24);
-//            Circle1_ImageView.setY(coordinate_Y_to_Pixel(AP1.getY())-r[3]/2+24);
-//            Circle2_ImageView.setX(coordinate_X_to_Pixel(AP2.getX())-r[4]/2+24);
-//            Circle2_ImageView.setY(coordinate_Y_to_Pixel(AP2.getY())-r[4]/2+24);
-//            Circle3_ImageView.setX(coordinate_X_to_Pixel(AP3.getX())-r[5]/2+24);
-//            Circle3_ImageView.setY(coordinate_Y_to_Pixel(AP3.getY())-r[5]/2+24);
+            Circles[0].setVisibility(View.VISIBLE);
+            Circles[1].setVisibility(View.VISIBLE);
+            Circles[2].setVisibility(View.VISIBLE);
 
-            path.moveTo(coordinate_X_to_bitmap(10), coordinate_Y_to_bitmap(10));
-            path.lineTo(coordinate_X_to_bitmap(10), coordinate_Y_to_bitmap(10));
-
-            temp_canvas.drawPath(path, paint);
-            floor_plan.setImageBitmap(temp_bitmap);
-
-            Snackbar.make(view, "Highlight APs and draw circle", Snackbar.LENGTH_SHORT).show();
+            Snackbar.make(view, "Mode All: Highlight APs being used for trilateration and draw circle",
+                    Snackbar.LENGTH_SHORT).show();
         } else if (buttonState == 2) {
             visualiseButton.setText("None");
             buttonState = 0;
@@ -762,56 +693,42 @@ public class LocalisationActivity extends AppCompatActivity implements SensorEve
             AP7_ImageView.setColorFilter(color_blue);
             AP8_ImageView.setColorFilter(color_blue);
 
-            Circles[0].setAlpha(0.0f);
-            Circles[1].setAlpha(0.0f);
-            Circles[2].setAlpha(0.0f);
+            Circles[0].setVisibility(View.GONE);
+            Circles[1].setVisibility(View.GONE);
+            Circles[2].setVisibility(View.GONE);
 
-            /*Circle1_ImageView.setVisibility(View.INVISIBLE);
-            Circle2_ImageView.setVisibility(View.GONE);
-            Circle1_ImageView.setLayoutParams(new FrameLayout.LayoutParams(r[0],r[0]));
-            Circle2_ImageView.setLayoutParams(new FrameLayout.LayoutParams(r[4],r[4]));
-            Circle3_ImageView.setLayoutParams(new FrameLayout.LayoutParams(r[2],r[2]));
-            Circle1_ImageView.setAlpha(0.2f);
-            Circle2_ImageView.setAlpha(0.2f);
-            Circle3_ImageView.setAlpha(0.2f);
-            Circle1_ImageView.setX(coordinate_X_to_Pixel(AP7.getX())-r[0]/2+24);
-            Circle1_ImageView.setY(coordinate_Y_to_Pixel(AP7.getY())-r[0]/2+24);
-            Circle2_ImageView.setX(coordinate_X_to_Pixel(AP8.getX())-r[4]/2+24);
-            Circle2_ImageView.setY(coordinate_Y_to_Pixel(AP8.getY())-r[4]/2+24);
-            Circle3_ImageView.setX(coordinate_X_to_Pixel(AP3.getX())-r[2]/2+24);
-            Circle3_ImageView.setY(coordinate_Y_to_Pixel(AP3.getY())-r[2]/2+24);*/
-
-            Snackbar.make(view, "Hide highlighted AP and circle", Snackbar.LENGTH_SHORT).show();
+            Snackbar.make(view, "Mode None: Only display user's path",
+                    Snackbar.LENGTH_SHORT).show();
         }
     }
 
-    private void ScanInBackground(){
+    private void ScanInBackground() {
         Handler BackgroundScan_Handler = new Handler();
         Runnable BackgroundScan_Runnable = new Runnable() {
             @Override
             public void run() {
                 if (Running && (APs_MacAddress.size() < 8)) {
-                    Log.d(TAG,"Scanning...");
-                    BackgroundScan_Handler.postDelayed(this,5000);
+                    Log.d(TAG, "Scanning...");
+                    BackgroundScan_Handler.postDelayed(this, 5000);
                     myWifiManager.startScan();
                 } else {
                     BackgroundScan_Handler.removeCallbacks(this);
                 }
             }
         };
-        BackgroundScan_Handler.postDelayed(BackgroundScan_Runnable,2000);
+        BackgroundScan_Handler.postDelayed(BackgroundScan_Runnable, 2000);
     }
 
-    private void registerSensors(){
-        for (Sensor eachSensor:sensors.values()){
+    private void registerSensors() {
+        for (Sensor eachSensor : sensors.values()) {
             sensorManager.registerListener(this,
-                    eachSensor,SensorManager.SENSOR_DELAY_FASTEST);
+                    eachSensor, SensorManager.SENSOR_DELAY_FASTEST);
         }
     }
 
-    private void unregisterSensors(){
-        for (Sensor eachSensor:sensors.values()){
-            sensorManager.unregisterListener(this,eachSensor);
+    private void unregisterSensors() {
+        for (Sensor eachSensor : sensors.values()) {
+            sensorManager.unregisterListener(this, eachSensor);
         }
     }
 
@@ -820,17 +737,17 @@ public class LocalisationActivity extends AppCompatActivity implements SensorEve
         final float alpha = 0.97f;
         IMU_timestamp = SystemClock.elapsedRealtimeNanos();
 
-        switch (sensorEvent.sensor.getType()){
+        switch (sensorEvent.sensor.getType()) {
             case Sensor.TYPE_ACCELEROMETER:
-                LastAccReading[0] = alpha * LastAccReading[0] + (1-alpha) * sensorEvent.values[0];
-                LastAccReading[1] = alpha * LastAccReading[1] + (1-alpha) * sensorEvent.values[1];
-                LastAccReading[2] = alpha * LastAccReading[2] + (1-alpha) * sensorEvent.values[2];
+                LastAccReading[0] = alpha * LastAccReading[0] + (1 - alpha) * sensorEvent.values[0];
+                LastAccReading[1] = alpha * LastAccReading[1] + (1 - alpha) * sensorEvent.values[1];
+                LastAccReading[2] = alpha * LastAccReading[2] + (1 - alpha) * sensorEvent.values[2];
                 break;
 
             case Sensor.TYPE_MAGNETIC_FIELD:
-                LastMagReading[0] = alpha * LastMagReading[0] + (1-alpha) * sensorEvent.values[0];
-                LastMagReading[1] = alpha * LastMagReading[1] + (1-alpha) * sensorEvent.values[1];
-                LastMagReading[2] = alpha * LastMagReading[2] + (1-alpha) * sensorEvent.values[2];
+                LastMagReading[0] = alpha * LastMagReading[0] + (1 - alpha) * sensorEvent.values[0];
+                LastMagReading[1] = alpha * LastMagReading[1] + (1 - alpha) * sensorEvent.values[1];
+                LastMagReading[2] = alpha * LastMagReading[2] + (1 - alpha) * sensorEvent.values[2];
                 break;
 
             case Sensor.TYPE_GYROSCOPE:
@@ -850,26 +767,26 @@ public class LocalisationActivity extends AppCompatActivity implements SensorEve
     public void onAccuracyChanged(Sensor sensor, int i) {
         switch (i) {
             case -1:
-                Log.d(TAG,"No Contact");
+                Log.d(TAG, "No Contact");
                 break;
             case 0:
-                Log.d(TAG,"Unreliable");
+                Log.d(TAG, "Unreliable");
                 break;
             case 1:
-                Log.d(TAG,"Low Accuracy");
+                Log.d(TAG, "Low Accuracy");
                 break;
             case 2:
-                Log.d(TAG,"Medium Accuracy");
+                Log.d(TAG, "Medium Accuracy");
                 break;
             case 3:
-                Log.d(TAG,"High Accuracy");
+                Log.d(TAG, "High Accuracy");
         }
     }
 
     private class WifiScanReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            for (ScanResult scanResult:myWifiManager.getScanResults()){
+            for (ScanResult scanResult : myWifiManager.getScanResults()) {
                 if (scanResult.is80211mcResponder()) {
                     if (!APs_MacAddress.contains(scanResult.BSSID)) {
                         APs_MacAddress.add(scanResult.BSSID);
@@ -898,8 +815,8 @@ public class LocalisationActivity extends AppCompatActivity implements SensorEve
         @Override
         public void onRangingResults(@NonNull List<RangingResult> list) {
             Ranging_Results.clear();
-            for (RangingResult result:list) {
-                if (result.getStatus() == 0){
+            for (RangingResult result : list) {
+                if (result.getStatus() == 0) {
                     Ranging_Results.add(result);
                 }
             }
@@ -926,7 +843,7 @@ public class LocalisationActivity extends AppCompatActivity implements SensorEve
     }
 
     protected void onResume() {
-        Log.d(TAG,"onResume() LocalisationActivity");
+        Log.d(TAG, "onResume() LocalisationActivity");
         super.onResume();
         registerSensors();
         //registerReceiver(myWifiScanReceiver, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
