@@ -98,6 +98,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {
+        //Do not use switch case
         if (menuItem.getItemId() == R.id.nav_server){
             DialogServer();
         }
@@ -105,7 +106,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             DialogCSV();
         }
         else if (menuItem.getItemId() == R.id.nav_ap){
-            Toast.makeText(getApplicationContext(),"AP", Toast.LENGTH_SHORT).show();
+            Intent intentAPLocation = new Intent(getApplicationContext(), APLocation.class);
+            startActivity(intentAPLocation);
         }
         else if (menuItem.getItemId() == R.id.nav_rtt){
             //Check WiFi-RTT availability of the device
@@ -255,7 +257,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         Log.d(TAG, "onResume() MainActivity");
         super.onResume();
 
-        // each time resume back in onResume state, check location permission
+        //each time resume back in onResume state, check location permission
         LocationPermission = ActivityCompat.checkSelfPermission(
                 this, permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
 
@@ -294,7 +296,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     editorServer.apply();
 
                     Toast.makeText(getApplicationContext(),"Server address: "
-                            + serverAddress + "is applied",Toast.LENGTH_LONG).show();
+                            + serverAddress + " is applied",Toast.LENGTH_LONG).show();
                 }
             }
         });
@@ -334,7 +336,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     editorServer.apply();
 
                     Toast.makeText(getApplicationContext(),"The csv file name: "
-                            + csvFile + "is applied",Toast.LENGTH_LONG).show();
+                            + csvFile + " is applied",Toast.LENGTH_LONG).show();
                 }
             }
         });

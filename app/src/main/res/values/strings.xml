@@ -68,10 +68,14 @@
     <!-- VersionActivity -->
     <string name="VersionToolbar">Version of this App</string>
     <string name="APPLogo">APP logo</string>
-    <string name="CurrentVersion">Current Version: v3.0</string>
     <string name="ChangelogTitle">Changelog:</string>
-    <!-- Changelog -->
+    <!-- Version management & Changelog -->
+    <string name="CurrentVersion">Current Version: v3.1</string>
     <string name="ChangelogBody">
+        <b><big>WiFi-RTT v3.1 (2022.10.19)</big></b>\n
+        - Added "AP Location" settings under navigation menu\n
+        - In localization, the number of AP and their location will be dynamically changed based on "AP Location" settings\n
+        \n
         <b><big>WiFi-RTT v3.0 (2022.10.18)</big></b>\n
         - Completed functional navigation menu\n
         - Server address now can be stored in internal storage, you won\'t need to type it everytime\n
@@ -128,5 +132,11 @@
     <!-- APLocationActivity -->
     <string name="APLocationToolbar">AP Location Setting</string>
     <string name="LocationTitle">Choose a location</string>
+    <string name="CoordinateTitle">Configure each AP location [m]:</string>
+    <string name="TestSiteLinkBuilding">Link Building (J13)</string>
+    <string name="TestSiteMechanicalBuilding">Mechanical Building (J07)</string>
+    <string name="DefaultButton">Default</string>
+    <string name="ApplyButton">Apply</string>
+    <string name="APLocationNotes">Note: If an AP is not used, just leave the EditText blank!</string>
 
 </resources>

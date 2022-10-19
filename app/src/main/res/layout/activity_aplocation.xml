@@ -17,13 +17,473 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"/>
 
+    <Button
+        android:id="@+id/btnDefault"
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:text="@string/DefaultButton"
+        android:textAllCaps="false"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginBottom="50dp"
+        android:layout_marginStart="80dp"
+        android:onClick="onClickSetDefault" />
+
+    <Button
+        android:id="@+id/btnApply"
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:text="@string/ApplyButton"
+        android:textAllCaps="false"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginBottom="50dp"
+        android:layout_marginEnd="80dp"
+        android:onClick="onClickApply" />
+
     <TextView
+        android:id="@+id/locationTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:layout_constraintTop_toBottomOf="@id/toolbarAPLocation"
         app:layout_constraintLeft_toLeftOf="parent"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="30dp"
+        android:layout_marginStart="20dp"
+        android:text="@string/LocationTitle"
+        android:textSize="20sp"
+        android:textStyle="bold" />
 
-        android:text="@string/LocationTitle" />
+    <RadioGroup
+        android:id="@+id/radioGroupLocation"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:layout_marginTop="10dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/locationTitle">
+
+        <RadioButton
+            android:id="@+id/radioButtonLink"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/TestSiteLinkBuilding"
+            android:textSize="16sp"
+            android:checked="true" />
+
+        <RadioButton
+            android:id="@+id/radioButtonMechanical"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/TestSiteMechanicalBuilding"
+            android:textSize="16sp"/>
+        
+    </RadioGroup>
+
+    <TextView
+        android:id="@+id/coordinateTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/radioGroupLocation"
+        app:layout_constraintLeft_toLeftOf="parent"
+        android:layout_marginTop="20dp"
+        android:layout_marginStart="20dp"
+        android:text="@string/CoordinateTitle"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/textViewAP1X"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="AP1 (X):"
+        tools:ignore="HardCodedText"
+        android:textSize="16sp"
+        app:layout_constraintTop_toBottomOf="@id/coordinateTitle"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginTop="20dp"
+        android:layout_marginStart="30dp"/>
+
+    <TextView
+        android:id="@+id/textViewAP2X"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="AP2 (X):"
+        tools:ignore="HardCodedText"
+        android:textSize="16sp"
+        app:layout_constraintTop_toBottomOf="@id/coordinateTitle"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginTop="60dp"
+        android:layout_marginStart="30dp" />
+
+    <TextView
+        android:id="@+id/textViewAP3X"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="AP3 (X):"
+        tools:ignore="HardCodedText"
+        android:textSize="16sp"
+        app:layout_constraintTop_toBottomOf="@id/coordinateTitle"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginTop="100dp"
+        android:layout_marginStart="30dp" />
+
+    <TextView
+        android:id="@+id/textViewAP4X"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="AP4 (X):"
+        tools:ignore="HardCodedText"
+        android:textSize="16sp"
+        app:layout_constraintTop_toBottomOf="@id/coordinateTitle"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginTop="140dp"
+        android:layout_marginStart="30dp" />
+
+    <TextView
+        android:id="@+id/textViewAP5X"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="AP5 (X):"
+        tools:ignore="HardCodedText"
+        android:textSize="16sp"
+        app:layout_constraintTop_toBottomOf="@id/coordinateTitle"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginTop="180dp"
+        android:layout_marginStart="30dp" />
+
+    <TextView
+        android:id="@+id/textViewAP6X"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="AP6 (X):"
+        tools:ignore="HardCodedText"
+        android:textSize="16sp"
+        app:layout_constraintTop_toBottomOf="@id/coordinateTitle"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginTop="220dp"
+        android:layout_marginStart="30dp" />
+
+    <TextView
+        android:id="@+id/textViewAP7X"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="AP7 (X):"
+        tools:ignore="HardCodedText"
+        android:textSize="16sp"
+        app:layout_constraintTop_toBottomOf="@id/coordinateTitle"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginTop="260dp"
+        android:layout_marginStart="30dp" />
+
+    <TextView
+        android:id="@+id/textViewAP8X"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="AP8 (X):"
+        tools:ignore="HardCodedText"
+        android:textSize="16sp"
+        app:layout_constraintTop_toBottomOf="@id/coordinateTitle"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginTop="300dp"
+        android:layout_marginStart="30dp" />
+
+    <TextView
+        android:id="@+id/textViewAP1Y"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="AP1 (Y):"
+        tools:ignore="HardCodedText"
+        android:textSize="16sp"
+        app:layout_constraintTop_toBottomOf="@id/coordinateTitle"
+        app:layout_constraintRight_toRightOf="parent"
+        android:layout_marginTop="20dp"
+        android:layout_marginEnd="140dp"/>
+
+    <TextView
+        android:id="@+id/textViewAP2Y"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="AP2 (Y):"
+        tools:ignore="HardCodedText"
+        android:textSize="16sp"
+        app:layout_constraintTop_toBottomOf="@id/coordinateTitle"
+        app:layout_constraintRight_toRightOf="parent"
+        android:layout_marginTop="60dp"
+        android:layout_marginEnd="140dp"/>
+
+    <TextView
+        android:id="@+id/textViewAP3Y"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="AP3 (Y):"
+        tools:ignore="HardCodedText"
+        android:textSize="16sp"
+        app:layout_constraintTop_toBottomOf="@id/coordinateTitle"
+        app:layout_constraintRight_toRightOf="parent"
+        android:layout_marginTop="100dp"
+        android:layout_marginEnd="140dp"/>
+
+    <TextView
+        android:id="@+id/textViewAP4Y"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="AP4 (Y):"
+        tools:ignore="HardCodedText"
+        android:textSize="16sp"
+        app:layout_constraintTop_toBottomOf="@id/coordinateTitle"
+        app:layout_constraintRight_toRightOf="parent"
+        android:layout_marginTop="140dp"
+        android:layout_marginEnd="140dp"/>
+
+    <TextView
+        android:id="@+id/textViewAP5Y"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="AP5 (Y):"
+        tools:ignore="HardCodedText"
+        android:textSize="16sp"
+        app:layout_constraintTop_toBottomOf="@id/coordinateTitle"
+        app:layout_constraintRight_toRightOf="parent"
+        android:layout_marginTop="180dp"
+        android:layout_marginEnd="140dp"/>
+
+    <TextView
+        android:id="@+id/textViewAP6Y"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="AP6 (Y):"
+        tools:ignore="HardCodedText"
+        android:textSize="16sp"
+        app:layout_constraintTop_toBottomOf="@id/coordinateTitle"
+        app:layout_constraintRight_toRightOf="parent"
+        android:layout_marginTop="220dp"
+        android:layout_marginEnd="140dp"/>
+
+    <TextView
+        android:id="@+id/textViewAP7Y"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="AP7 (Y):"
+        tools:ignore="HardCodedText"
+        android:textSize="16sp"
+        app:layout_constraintTop_toBottomOf="@id/coordinateTitle"
+        app:layout_constraintRight_toRightOf="parent"
+        android:layout_marginTop="260dp"
+        android:layout_marginEnd="140dp"/>
+
+    <TextView
+        android:id="@+id/textViewAP8Y"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="AP8 (Y):"
+        tools:ignore="HardCodedText"
+        android:textSize="16sp"
+        app:layout_constraintTop_toBottomOf="@id/coordinateTitle"
+        app:layout_constraintRight_toRightOf="parent"
+        android:layout_marginTop="300dp"
+        android:layout_marginEnd="140dp"/>
+
+    <EditText
+        android:id="@+id/editTextAP1X"
+        android:layout_width="80dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/coordinateTitle"
+        app:layout_constraintLeft_toLeftOf="parent"
+        android:inputType="numberDecimal"
+        android:textAlignment="center"
+        android:textSize="16sp"
+        android:layout_marginTop="10dp"
+        android:layout_marginStart="100dp" />
+
+    <EditText
+        android:id="@+id/editTextAP2X"
+        android:layout_width="80dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/coordinateTitle"
+        app:layout_constraintLeft_toLeftOf="parent"
+        android:inputType="numberDecimal"
+        android:textAlignment="center"
+        android:textSize="16sp"
+        android:layout_marginTop="50dp"
+        android:layout_marginStart="100dp"/>
+
+    <EditText
+        android:id="@+id/editTextAP3X"
+        android:layout_width="80dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/coordinateTitle"
+        app:layout_constraintLeft_toLeftOf="parent"
+        android:inputType="numberDecimal"
+        android:textAlignment="center"
+        android:textSize="16sp"
+        android:layout_marginTop="90dp"
+        android:layout_marginStart="100dp"/>
+
+    <EditText
+        android:id="@+id/editTextAP4X"
+        android:layout_width="80dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/coordinateTitle"
+        app:layout_constraintLeft_toLeftOf="parent"
+        android:inputType="numberDecimal"
+        android:textAlignment="center"
+        android:textSize="16sp"
+        android:layout_marginTop="130dp"
+        android:layout_marginStart="100dp"/>
+
+    <EditText
+        android:id="@+id/editTextAP5X"
+        android:layout_width="80dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/coordinateTitle"
+        app:layout_constraintLeft_toLeftOf="parent"
+        android:inputType="numberDecimal"
+        android:textAlignment="center"
+        android:textSize="16sp"
+        android:layout_marginTop="170dp"
+        android:layout_marginStart="100dp"/>
+
+    <EditText
+        android:id="@+id/editTextAP6X"
+        android:layout_width="80dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/coordinateTitle"
+        app:layout_constraintLeft_toLeftOf="parent"
+        android:inputType="numberDecimal"
+        android:textAlignment="center"
+        android:textSize="16sp"
+        android:layout_marginTop="210dp"
+        android:layout_marginStart="100dp"/>
+
+    <EditText
+        android:id="@+id/editTextAP7X"
+        android:layout_width="80dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/coordinateTitle"
+        app:layout_constraintLeft_toLeftOf="parent"
+        android:inputType="numberDecimal"
+        android:textAlignment="center"
+        android:textSize="16sp"
+        android:layout_marginTop="250dp"
+        android:layout_marginStart="100dp"/>
+
+    <EditText
+        android:id="@+id/editTextAP8X"
+        android:layout_width="80dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/coordinateTitle"
+        app:layout_constraintLeft_toLeftOf="parent"
+        android:inputType="numberDecimal"
+        android:textAlignment="center"
+        android:textSize="16sp"
+        android:layout_marginTop="290dp"
+        android:layout_marginStart="100dp"/>
+
+    <EditText
+        android:id="@+id/editTextAP1Y"
+        android:layout_width="80dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/coordinateTitle"
+        app:layout_constraintRight_toRightOf="parent"
+        android:inputType="numberDecimal"
+        android:textAlignment="center"
+        android:textSize="16sp"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="50dp"/>
+
+    <EditText
+        android:id="@+id/editTextAP2Y"
+        android:layout_width="80dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/coordinateTitle"
+        app:layout_constraintRight_toRightOf="parent"
+        android:inputType="numberDecimal"
+        android:textAlignment="center"
+        android:textSize="16sp"
+        android:layout_marginTop="50dp"
+        android:layout_marginEnd="50dp"/>
+
+    <EditText
+        android:id="@+id/editTextAP3Y"
+        android:layout_width="80dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/coordinateTitle"
+        app:layout_constraintRight_toRightOf="parent"
+        android:inputType="numberDecimal"
+        android:textAlignment="center"
+        android:textSize="16sp"
+        android:layout_marginTop="90dp"
+        android:layout_marginEnd="50dp"/>
+
+    <EditText
+        android:id="@+id/editTextAP4Y"
+        android:layout_width="80dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/coordinateTitle"
+        app:layout_constraintRight_toRightOf="parent"
+        android:inputType="numberDecimal"
+        android:textAlignment="center"
+        android:textSize="16sp"
+        android:layout_marginTop="130dp"
+        android:layout_marginEnd="50dp"/>
+
+    <EditText
+        android:id="@+id/editTextAP5Y"
+        android:layout_width="80dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/coordinateTitle"
+        app:layout_constraintRight_toRightOf="parent"
+        android:inputType="numberDecimal"
+        android:textAlignment="center"
+        android:textSize="16sp"
+        android:layout_marginTop="170dp"
+        android:layout_marginEnd="50dp"/>
+
+    <EditText
+        android:id="@+id/editTextAP6Y"
+        android:layout_width="80dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/coordinateTitle"
+        app:layout_constraintRight_toRightOf="parent"
+        android:inputType="numberDecimal"
+        android:textAlignment="center"
+        android:textSize="16sp"
+        android:layout_marginTop="210dp"
+        android:layout_marginEnd="50dp"/>
+
+    <EditText
+        android:id="@+id/editTextAP7Y"
+        android:layout_width="80dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/coordinateTitle"
+        app:layout_constraintRight_toRightOf="parent"
+        android:inputType="numberDecimal"
+        android:textAlignment="center"
+        android:textSize="16sp"
+        android:layout_marginTop="250dp"
+        android:layout_marginEnd="50dp"/>
+
+    <EditText
+        android:id="@+id/editTextAP8Y"
+        android:layout_width="80dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/coordinateTitle"
+        app:layout_constraintRight_toRightOf="parent"
+        android:inputType="numberDecimal"
+        android:textAlignment="center"
+        android:textSize="16sp"
+        android:layout_marginTop="290dp"
+        android:layout_marginEnd="50dp"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/textViewAP8X"
+        android:layout_marginTop="30dp"
+        android:text="@string/APLocationNotes"
+        android:textAlignment="center"
+        android:textColor="@android:color/darker_gray" />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

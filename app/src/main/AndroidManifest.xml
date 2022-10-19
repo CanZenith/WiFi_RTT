@@ -26,9 +26,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.WiFi_RTT"
         android:usesCleartextTraffic="true">
-        <activity
-            android:name=".APLocation"
-            android:exported="false" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -39,28 +37,41 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <activity
             android:name=".LocationPermissionRequest"
             android:label="@string/ActivityPermissionRequestLabel"
             android:parentActivityName=".MainActivity" />
+
         <activity
             android:name=".RangingActivity"
             android:label="@string/ActivityRangingLabel"
             android:parentActivityName=".MainActivity" />
+
         <activity
             android:name=".LocalisationActivity"
             android:label="@string/ActivityLocalisationLabel"
             android:parentActivityName=".RangingActivity" />
-        <activity android:name=".LocalisationActivity_mechanical" />
+
+        <activity
+            android:name=".LocalisationActivity_mechanical" />
+
         <activity
             android:name=".VersionActivity"
             android:exported="false"
             android:hardwareAccelerated="true"
             android:parentActivityName=".MainActivity" />
+
         <activity
             android:name=".HelpActivity"
             android:exported="false"
             android:parentActivityName=".MainActivity" />
+
+        <activity
+            android:name=".APLocation"
+            android:exported="false"
+            android:hardwareAccelerated="true"
+            android:parentActivityName=".MainActivity"/>
 
         <provider
             android:name="androidx.core.content.FileProvider"
