@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group android:checkableBehavior="single">
+
+        <item
+            android:id="@+id/nav_home"
+            android:title="@string/NavHome"
+            android:icon="@drawable/icon_home"/>
+
+        <item
+            android:id="@+id/nav_server"
+            android:title="@string/NavServer"
+            android:icon="@drawable/icon_server"/>
+
+        <item
+            android:id="@+id/nav_csv"
+            android:title="@string/NavCSV"
+            android:icon="@drawable/icon_csv"/>
+
+        <item
+            android:id="@+id/nav_ap"
+            android:title="@string/NavAP"
+            android:icon="@drawable/icon_ap"/>
+
+        <item
+            android:id="@+id/nav_rtt"
+            android:title="@string/NavRTT"
+            android:icon="@drawable/icon_wifirtt"/>
+
+        <item
+            android:id="@+id/nav_version"
+            android:title="@string/NavVersion"
+            android:icon="@drawable/icon_version"/>
+
+        <item
+            android:id="@+id/nav_help"
+            android:title="@string/NavHelp"
+            android:icon="@drawable/icon_help"/>
+
+    </group>
+
+</menu>
